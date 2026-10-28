@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Batch Crime Scene Evidence Sweep · AI Crime Scene Detector{% endblock %}
+
+{% block content %}
+<section class="hero-header">
+    <div class="hero-eyebrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+        Multi-Evidence Incident Sweep
+    </div>
+    <h1 class="hero-title">Batch Evidence Scanner</h1>
+    <p class="hero-desc">
+        Upload multiple crime scene photographs simultaneously (wide perimeter, forensic close-ups, weapon recoveries) to automatically index evidence and generate unified case documentation.
+    </p>
+</section>
+
+<section class="workspace-card" style="padding: 2.2rem;">
+    <form action="{{ url_for('web.process_batch') }}" method="post" enctype="multipart/form-data">
+        <div class="dropzone" id="batchDropzone" style="margin-bottom: 1.5rem;">
+            <input type="file" id="batchFiles" name="images" accept="image/jpeg,image/png,image/webp" multiple required>
+            <div class="dropzone-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+            </div>
+            <div class="dropzone-title">Select multiple crime scene photographs</div>
+            <div class="dropzone-subtitle" id="batchFileCount">Choose files to process in parallel</div>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label" for="title">Batch Sweep Subject / Incident</label>
+                <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Warehouse Raid Evidence Sweep" value="Incident Perimeter Sweep" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="investigator">Lead Investigator</label>
+                <input type="text" class="form-control" id="investigator" name="investigator" placeholder="Investigator Name" value="Forensic Team Alpha" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="model">AI Detection Engine</label>
+                <select class="form-select" id="model" name="model">
+                    <option value="ensemble" selected>Dual-Ensemble Engine (Weapons + Traces)</option>
+                    <option value="weapon">Weapon & Ballistics Specialist</option>
+                    <option value="forensic">Forensic Traces & Remains</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary" style="margin-top: 2rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Execute Batch Forensic Sweep
+        </button>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('batchFiles').addEventListener('change', function(e) {
+    const count = this.files.length;
+    document.getElementById('batchFileCount').textContent = count > 0 ? `${count} files selected for batch processing` : 'Choose files to process in parallel';
+});
+</script>
+{% endblock %}

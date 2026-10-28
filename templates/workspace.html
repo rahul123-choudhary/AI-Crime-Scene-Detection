@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Forensic Intake Workstation | AI Crime Scene Detector{% endblock %}
+
+{% block content %}
+<section class="hero-header" style="margin-bottom: 2rem;">
+    <div class="hero-eyebrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+        Automated Crime Scene Computer Vision & Intake Hub
+    </div>
+    <h1 class="hero-title">Forensic Evidence & Threat Detection Workstation</h1>
+    <p class="hero-desc">
+        Analyze crime-scene photographs and video sweeps with specialized multi-model deep learning. Detect lethal firearms, edged weapons, biological traces, and impression evidence with forensic confidence scoring.
+    </p>
+</section>
+
+<!-- System Statistics HUD -->
+<section class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Indexed Cases</div>
+        <div class="stat-value">{{ stats.total_cases }}</div>
+    </div>
+    <div class="stat-card evidence">
+        <div class="stat-label">Evidence Cataloged</div>
+        <div class="stat-value">{{ stats.total_evidence }}</div>
+    </div>
+    <div class="stat-card critical">
+        <div class="stat-label">Critical Threat Scenes</div>
+        <div class="stat-value">{{ stats.critical_threats }}</div>
+    </div>
+    <div class="stat-card weapons">
+        <div class="stat-label">Weapons Identified</div>
+        <div class="stat-value">{{ stats.weapons_detected }}</div>
+    </div>
+</section>
+
+<!-- Intake Workstation Card -->
+<section class="workspace-card">
+    <nav class="tab-nav">
+        <button type="button" class="tab-btn active" data-tab="tab-upload">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+            Direct Media Intake (Photo & Video)
+        </button>
+        <button type="button" class="tab-btn" data-tab="tab-video">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            Recorded Video Sweep
+        </button>
+        <button type="button" class="tab-btn" data-tab="tab-camera">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12m-3.2 0a3.2 3.2 0 1 0 6.4 0 3.2 3.2 0 1 0-6.4 0zM9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9z"/></svg>
+            Live Field Camera
+        </button>
+        <button type="button" class="tab-btn" data-tab="tab-samples">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+            Preloaded Scenarios (1-Click Test)
+        </button>
+    </nav>
+
+    <!-- Tab 1: Direct Media Upload (Photo & Video) -->
+    <div id="tab-upload" class="tab-content active">
+        <form id="mainIntakeForm" action="{{ url_for('web.predict') }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="sample_image" id="sampleImageInput" value="">
+            
+            <div class="dropzone" id="dropzone">
+                <input type="file" id="fileInput" name="image" accept="image/jpeg,image/png,image/webp,video/mp4,video/avi,video/quicktime,video/x-matroska,video/webm">
+                <div class="dropzone-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                </div>
+                <div class="dropzone-title">Drag & drop crime-scene photograph or video footage</div>
+                <div class="dropzone-subtitle">Accepts JPG, PNG, WEBP, MP4, AVI, MOV up to 100 MB · System auto-adapts all 6 parameters to match media suitability</div>
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <div id="aiScanOverlay" class="ai-scan-overlay" style="display: none;">
+                    <div class="laser-scanner"></div>
+                    <div class="scanner-badge">
+                        <span class="status-pulse" style="background: #38bdf8;"></span>
+                        <span id="aiScanStatusText">AI Neural Vision Scanning: Inspecting Visual Evidence & Objects...</span>
+                    </div>
+                </div>
+                <img id="previewImage" class="preview-image" alt="Evidence Preview">
+                <video id="previewVideo" class="preview-image" controls playsinline style="display: none; width: 100%; max-height: 380px;"></video>
+            </div>
+
+            <!-- Instant AI Evidence Findings & Scene Ticker -->
+            <div id="aiFindingsBar" class="ai-findings-bar" style="display: none;">
+                <div class="ai-findings-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="threat-pill" id="aiThreatPill">CRITICAL</span>
+                        <strong id="aiFindingsSummary">AI Pre-Scan Identified Evidence Objects</strong>
+                    </div>
+                    <span id="aiInferenceSpeed" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">AI Scan: 42ms</span>
+                </div>
+                <div class="ai-tags-list" id="aiTagsList"></div>
+            </div>
+
+            <!-- AI Suitability Presets -->
+            <div class="presets-bar">
+                <span class="presets-label">⚡ AI Calibration Presets:</span>
+                <button type="button" class="preset-chip active" data-preset="ensemble">🎯 Full Forensic Sweep (Dual Ensemble · 25%)</button>
+                <button type="button" class="preset-chip" data-preset="weapons">🔫 Firearms & Ballistics (Weapons Specialist · 25%)</button>
+                <button type="button" class="preset-chip" data-preset="traces">🔬 Biological & Latent Traces (High Sensitivity · 15%)</button>
+                <button type="button" class="preset-chip video-chip" data-preset="cctv">📹 CCTV Video Footage (Noise Filtered · 30%)</button>
+                <button type="button" class="preset-chip" data-preset="homicide">💀 Homicide Scene (Dual Ensemble · 20%)</button>
+            </div>
+
+            <!-- Smart Auto-Tuning Indicator Banner -->
+            <div id="smartAutoTuneBanner" class="auto-tune-banner" style="display: none;">
+                <div class="auto-tune-icon" id="autoTuneIcon">⚡</div>
+                <div class="auto-tune-text">
+                    <strong id="autoTuneTitle">Settings Auto-Calibrated for Uploaded Media</strong>
+                    <span id="autoTuneDetails">Optimal neural model, confidence threshold, and incident classification selected.</span>
+                </div>
+                <button type="button" id="btnResetAutoTune" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;">Reset Default</button>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <div class="label-row">
+                        <label class="form-label" for="model">AI Detection Engine</label>
+                        <span class="field-badge" id="modelBadge">Dual-Ensemble</span>
+                    </div>
+                    <select class="form-select" id="model" name="model">
+                        <option value="ensemble" selected>Dual-Ensemble Engine (Weapons + Traces) [Recommended]</option>
+                        <option value="weapon">Specialized Weapon & Ballistics Detector</option>
+                        <option value="forensic">General Forensic Evidence & Physical Traces</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <label class="form-label" for="confidence">Detection Confidence Threshold</label>
+                        <span class="field-badge" id="confBadge">25% Balanced</span>
+                    </div>
+                    <div class="range-wrap">
+                        <input type="range" class="range-input" id="confidence" name="confidence" min="0.10" max="0.90" step="0.05" value="0.25" oninput="confOutput.value = Math.round(this.value * 100) + '%'; const cb = document.getElementById('confBadge'); if(cb) cb.textContent = Math.round(this.value * 100) + '% Manual';">
+                        <output id="confOutput" class="range-val">25%</output>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <label class="form-label" for="investigator">Lead Investigator</label>
+                        <span class="field-badge" id="investigatorBadge">CSI Officer</span>
+                    </div>
+                    <input type="text" class="form-control" id="investigator" name="investigator" placeholder="e.g. Detective R. Vance" value="Forensic Investigator">
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <label class="form-label" for="location">Crime Scene Location</label>
+                        <span class="field-badge" id="locationBadge">Scene Location</span>
+                    </div>
+                    <input type="text" class="form-control" id="location" name="location" placeholder="e.g. 482 Elm St, Sector 4" value="Sector 4 Scene Investigation">
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <label class="form-label" for="title">Case Subject / Title</label>
+                        <span class="field-badge" id="titleBadge">Case Title</span>
+                    </div>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Armed Robbery Evidence Sweep">
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <label class="form-label" for="incident_type">Incident Classification</label>
+                        <span class="field-badge" id="incidentBadge">Violent Incident</span>
+                    </div>
+                    <select class="form-select" id="incident_type" name="incident_type">
+                        <option value="Armed Assault / Violent Incident" selected>Armed Assault / Violent Incident</option>
+                        <option value="Homicide Investigation">Homicide Investigation</option>
+                        <option value="CCTV / Video Surveillance Sweep">CCTV / Video Surveillance Sweep</option>
+                        <option value="Biological & Latent Trace Sweep">Biological & Latent Trace Sweep</option>
+                        <option value="Burglary & Forced Entry">Burglary & Forced Entry</option>
+                        <option value="Narcotics & Weapons Raid">Narcotics & Weapons Raid</option>
+                        <option value="Suspicious Scene Audit">Suspicious Scene Audit</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 1.4rem;">✨</span>
+                        <div>
+                            <label for="auto_enhance" style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary); cursor: pointer; margin-bottom: 2px; display: block;">
+                                AI Forensic Image Clarification & Super-Resolution
+                            </label>
+                            <span style="font-size: 0.78rem; color: var(--text-secondary);">
+                                Automatically clarifies blurry photos, removes noise, boosts low-light scenes, and sharpens evidential edges (+500% Laplacian variance).
+                            </span>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="auto_enhance" name="auto_enhance" value="true" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" id="mainSubmitBtn" class="btn-primary">
+                <svg id="submitBtnIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <span id="submitBtnText">Execute Forensic Evidence Sweep</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Tab 2: Recorded Video Footage Intake -->
+    <div id="tab-video" class="tab-content">
+        <form id="videoIntakeForm" action="{{ url_for('web.predict_video') }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="sample_video" id="sampleVideoInput" value="">
+
+            <div class="dropzone" id="videoDropzone">
+                <input type="file" id="videoFileInput" name="video" accept="video/mp4,video/avi,video/quicktime,video/x-matroska,video/webm">
+                <div class="dropzone-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning-amber);">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                </div>
+                <div class="dropzone-title">Upload CCTV, bodycam, or drone crime scene video</div>
+                <div class="dropzone-subtitle">Supports MP4, AVI, MOV, MKV up to 100 MB · Processes frame-by-frame with timeline markers</div>
+            </div>
+
+            <div style="margin-top: 1.2rem; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 12px 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.82rem; font-weight: 600; font-family: var(--font-mono); color: #fcd34d;">
+                        📹 1-CLICK CCTV SURVEILLANCE CRIME VIDEOS:
+                    </span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Select any scenario to run video inference</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('sampleVideoInput').value='cctv_armed_robbery.mp4'; document.getElementById('vid_title').value='CCTV Armed Robbery Sweep'; document.getElementById('videoIntakeForm').submit();" style="font-size: 0.78rem; padding: 6px 10px; border-color: rgba(239, 68, 68, 0.4); text-align: left; justify-content: flex-start;">
+                        🔴 <strong>Armed Robbery</strong> · Store Counter
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('sampleVideoInput').value='cctv_perimeter_burglary.mp4'; document.getElementById('vid_title').value='CCTV Night Perimeter Burglary'; document.getElementById('videoIntakeForm').submit();" style="font-size: 0.78rem; padding: 6px 10px; border-color: rgba(245, 158, 11, 0.4); text-align: left; justify-content: flex-start;">
+                        🌙 <strong>Perimeter Burglary</strong> · Night-Vision
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('sampleVideoInput').value='cctv_alleyway_incident.mp4'; document.getElementById('vid_title').value='CCTV Alleyway Violent Incident'; document.getElementById('videoIntakeForm').submit();" style="font-size: 0.78rem; padding: 6px 10px; border-color: rgba(168, 85, 247, 0.4); text-align: left; justify-content: flex-start;">
+                        ⚠️ <strong>Alleyway Incident</strong> · Dropped Weapon
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('sampleVideoInput').value='sample_cctv_footage.mp4'; document.getElementById('vid_title').value='CCTV Security Cam 04 Sweep'; document.getElementById('videoIntakeForm').submit();" style="font-size: 0.78rem; padding: 6px 10px; border-color: rgba(56, 189, 248, 0.4); text-align: left; justify-content: flex-start;">
+                        🎥 <strong>CCTV Cam #04</strong> · Hallway Feed
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="vid_model">Video AI Engine</label>
+                    <select class="form-select" id="vid_model" name="model">
+                        <option value="ensemble" selected>Ensemble (Weapons & Traces)</option>
+                        <option value="weapon">Weapons Specialist (Fast Video)</option>
+                        <option value="forensic">Forensic Traces</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="vid_confidence">Detection Confidence</label>
+                    <div class="range-wrap">
+                        <input type="range" class="range-input" id="vid_confidence" name="confidence" min="0.10" max="0.90" step="0.05" value="0.25" oninput="vidConfOutput.value = Math.round(this.value * 100) + '%'">
+                        <output id="vidConfOutput" class="range-val">25%</output>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="vid_title">Video Case Title</label>
+                    <input type="text" class="form-control" id="vid_title" name="title" placeholder="e.g. CCTV Surveillance Homicide Sweep" value="CCTV Security Footage Analysis">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="vid_investigator">Lead Investigator</label>
+                    <input type="text" class="form-control" id="vid_investigator" name="investigator" value="Video Forensics Unit">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #d97706, #f59e0b);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                Process Video Footage & Build Timeline
+            </button>
+        </form>
+    </div>
+
+    <!-- Tab 3: Live Field Camera -->
+    <div id="tab-camera" class="tab-content">
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fca5a5; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                    <span class="status-pulse" style="background: #ef4444;"></span>
+                    Continuous Real-Time Live Surveillance Available
+                </h3>
+                <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 650px;">
+                    Stream your camera feed with continuous neural bounding box detection at 5–10 FPS, audio threat alarms, and a live evidence discovery ticker.
+                </p>
+            </div>
+            <a href="{{ url_for('web.live_monitor') }}" class="btn-primary" style="margin-top: 0; width: auto; background: linear-gradient(135deg, #dc2626, #ef4444); box-shadow: 0 4px 20px rgba(239, 68, 68, 0.35);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                Launch Real-Time Live Camera Monitor
+            </a>
+        </div>
+
+        <form id="cameraForm" action="{{ url_for('web.predict') }}" method="post" enctype="multipart/form-data">
+            <input type="file" id="cameraFileInput" name="image" style="display: none;">
+            <input type="hidden" name="model" value="ensemble">
+            <input type="hidden" name="title" value="Field Camera Snapshot Investigation">
+            <input type="hidden" name="location" value="Field Camera Live Capture">
+
+            <div class="camera-box">
+                <div class="video-wrap">
+                    <video id="cameraVideo" autoplay playsinline muted></video>
+                    <div class="reticle-crosshair"></div>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" id="startCameraBtn" class="btn-secondary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                        Initialize Snapshot Camera
+                    </button>
+                    <button type="button" id="capturePhotoBtn" class="btn-primary" style="display: none; margin-top: 0;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                        Capture & Process Frame
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tab 4: Preloaded Authentic Forensic Scenarios -->
+    <div id="tab-samples" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 1.2rem;">
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
+                Click any scenario below to immediately run multi-model inference and generate an official investigation report:
+            </p>
+            <!-- Category Filter Chips -->
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="preset-chip active" onclick="filterSamples('all', this)">All Scenarios (15)</button>
+                <button type="button" class="preset-chip" onclick="filterSamples('4k', this)" style="border-color: #34d399; color: #34d399;">✨ Ultra-HD 4K (2)</button>
+                <button type="button" class="preset-chip video-chip" onclick="filterSamples('video', this)">📹 CCTV Crime Videos (4)</button>
+                <button type="button" class="preset-chip" onclick="filterSamples('ucf', this)" style="border-color: #a855f7; color: #d8b4fe;">🔬 UCF Real Crimes (5)</button>
+                <button type="button" class="preset-chip" onclick="filterSamples('weapons', this)">🔫 Firearms & Arsenal (4)</button>
+            </div>
+        </div>
+
+        <div class="samples-grid">
+            {% for s in samples %}
+            {% if s.is_video %}
+                {% set cat = 'video' %}
+            {% elif '4k' in s.filename %}
+                {% set cat = '4k' %}
+            {% elif 'ucf' in s.filename %}
+                {% set cat = 'ucf' %}
+            {% else %}
+                {% set cat = 'weapons' %}
+            {% endif %}
+            <article class="sample-card" data-cat="{{ cat }}">
+                {% if s.is_video %}
+                <div style="height: 170px; background: #0b1626; display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid var(--border-subtle);">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="#f59e0b"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                    <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #fcd34d; margin-top: 8px;">CCTV VIDEO RECORDING</span>
+                </div>
+                {% else %}
+                <img src="{{ s.url }}" alt="{{ s.title }}" class="sample-thumb">
+                {% endif %}
+                <div class="sample-body">
+                    <span class="sample-tag" style="{% if s.is_video %}color: #f59e0b;{% elif '4k' in s.filename %}color: #34d399; border-color: rgba(52, 211, 153, 0.4);{% elif 'ucf' in s.filename %}color: #d8b4fe; border-color: rgba(168, 85, 247, 0.4);{% endif %}">{{ s.tag }}</span>
+                    <h3 class="sample-title">{{ s.title }}</h3>
+                    <p class="sample-desc">{{ s.desc }}</p>
+
+                    {% if s.is_video %}
+                    <form action="{{ url_for('web.predict_video') }}" method="post">
+                        <input type="hidden" name="sample_video" value="{{ s.filename }}">
+                        <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center; border-color: rgba(245, 158, 11, 0.4); color: #fcd34d;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            Process CCTV Video Footage
+                        </button>
+                    </form>
+                    {% else %}
+                    <button type="button" class="btn-secondary btn-load-sample" data-filename="{{ s.filename }}" style="width: 100%; justify-content: center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        Run 1-Click Analysis
+                    </button>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<script>
+function filterSamples(cat, btn) {
+    document.querySelectorAll('#tab-samples .preset-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#tab-samples .sample-card').forEach(card => {
+        if (cat === 'all' || card.getAttribute('data-cat') === cat) {
+            card.style.display = 'flex';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/camera_capture.js') }}"></script>
+
+{% endblock %}

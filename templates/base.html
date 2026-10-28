@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+    <title>{% block title %}CSI Forensic AI — Crime Scene Evidence Intelligence & Analytics{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}CSI Forensic AI Intelligence System — AI-powered crime scene evidence localization, automated ballistic detection, latent trace analysis, and CJIS-compliant forensic case reporting.{% endblock %}">
+    <meta name="keywords" content="forensic AI, crime scene detection, ballistics analysis, weapon localization, evidence intake, criminalistics">
+    <meta property="og:title" content="CSI Forensic AI — Crime Scene Evidence Intelligence">
+    <meta property="og:description" content="AI-assisted real-time crime scene evidence detection and forensic intelligence platform.">
+    <meta property="og:type" content="website">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- Google Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/forensic.css') }}">
+
+    <style>
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+            width: 100%;
+        }
+
+        /* Mobile Hamburger & Drawer Styles */
+        .mobile-menu-btn {
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            font-size: 1.15rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #38bdf8;
+        }
+
+        .mobile-nav-drawer {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            background: rgba(6, 14, 26, 0.96);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+            padding: 20px 24px;
+            z-index: 99;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .mobile-nav-drawer.open {
+            display: block;
+            animation: drawerSlideDown 0.25s ease forwards;
+        }
+
+        @keyframes drawerSlideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            list-style: none;
+        }
+
+        .mobile-nav-links a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #e2e8f0;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        .mobile-nav-links a:hover, .mobile-nav-links a.active {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+
+        /* Enhanced Flash Message Alerts */
+        .flash-container {
+            margin: 16px auto;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .flash-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .flash-card.flash-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+        }
+
+        .flash-card.flash-danger, .flash-card.flash-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+
+        .flash-card.flash-warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+        }
+
+        .flash-card.flash-info {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+        }
+
+        .flash-dismiss {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            opacity: 0.7;
+            padding: 4px;
+        }
+
+        .flash-dismiss:hover { opacity: 1; }
+
+        /* Universal Forensic Footer */
+        .universal-footer {
+            background: #06090e;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            margin-top: 60px;
+            padding: 40px 24px 24px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 36px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .footer-col h4 {
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+            letter-spacing: -0.2px;
+        }
+
+        .footer-links-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .footer-links-list a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .footer-links-list a:hover {
+            color: #38bdf8;
+        }
+
+        .footer-contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: #cbd5e1;
+        }
+
+        .footer-contact-link {
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-contact-link:hover {
+            color: #fbbf24;
+        }
+
+        .footer-bottom-bar {
+            max-width: 1400px;
+            margin: 24px auto 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 1024px) {
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .status-pill {
+                display: none;
+            }
+            .mobile-menu-btn {
+                display: block;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+            .universal-footer {
+                padding: 30px 16px 20px;
+            }
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Forensic Command Center Navigation -->
+    <header class="forensic-nav">
+        <div class="nav-container">
+            <a href="{{ url_for('web.dashboard') }}" class="brand" title="Forensic Command Center Dashboard" style="display:flex; align-items:center; gap:12px; text-decoration:none;">
+                <div style="width:36px; height:36px; flex-shrink:0;">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 5 L88 22 V52 C88 74 50 95 50 95 C50 95 12 74 12 52 V22 Z" fill="#121620" stroke="url(#baseShieldGrad)" stroke-width="5"/>
+                        <circle cx="50" cy="48" r="22" stroke="#ff2b42" stroke-width="4" stroke-dasharray="8 4"/>
+                        <line x1="50" y1="20" x2="50" y2="76" stroke="#fbbf24" stroke-width="3"/>
+                        <line x1="22" y1="48" x2="78" y2="48" stroke="#fbbf24" stroke-width="3"/>
+                        <circle cx="50" cy="48" r="5" fill="#ff2b42"/>
+                        <defs>
+                            <linearGradient id="baseShieldGrad" x1="0" y1="0" x2="100" y2="100">
+                                <stop offset="0%" stop-color="#ff2b42"/>
+                                <stop offset="100%" stop-color="#fbbf24"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div style="font-size: 17px; font-weight: 800; color: #ffffff; letter-spacing: -0.2px;">
+                    Crime Scene <span style="color: #fbbf24;">Detection</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav Links -->
+            <ul class="nav-links">
+                <li><a href="{{ url_for('web.dashboard') }}" class="{% if request.endpoint == 'web.dashboard' %}active{% endif %}" style="color: #ff334b; font-weight:700;"><i class="fa-solid fa-gauge-high"></i>Dashboard</a></li>
+                <li><a href="{{ url_for('web.dashboard', tab='upload') }}"><i class="fa-solid fa-microscope"></i>Evidence Intake</a></li>
+                <li><a href="{{ url_for('web.dashboard', tab='camera') }}" style="color: #f87171;"><span class="status-pulse" style="background:#ef4444; width:6px; height:6px; margin-right:4px;"></span>Live Camera</a></li>
+                <li><a href="{{ url_for('web.dashboard', tab='results') }}"><i class="fa-solid fa-folder-open"></i>Case Registry</a></li>
+                <li><a href="{{ url_for('web.api_docs') }}" class="{% if request.endpoint == 'web.api_docs' %}active{% endif %}"><i class="fa-solid fa-code"></i>API Explorer</a></li>
+            </ul>
+
+            <div style="display:flex; align-items:center; gap:10px;">
+                <a href="tel:+18005552746" style="color: #fbbf24; text-decoration: none; font-size: 12.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 6px;" title="Forensic Emergency Hotline">
+                    <i class="fa-solid fa-phone"></i> +1 (800) 555-CRIME
+                </a>
+                <a href="{{ url_for('web.landing') }}" title="Home Landing Page" style="color:#94a3b8; text-decoration:none; font-size:12.5px; padding:5px 9px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); display:inline-flex; align-items:center; gap:5px;">
+                    <i class="fa-solid fa-house"></i> Home
+                </a>
+                <a href="{{ url_for('web.logout') }}" title="Sign Out" style="color:#ff4d61; text-decoration:none; font-size:12.5px; padding:5px 9px; border-radius:6px; border:1px solid rgba(255,77,97,0.25); display:inline-flex; align-items:center; gap:5px;">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                </a>
+            </div>
+
+            <!-- Mobile Menu Toggle Button -->
+            <button type="button" class="mobile-menu-btn" id="mobileNavToggle" aria-label="Toggle navigation menu" onclick="toggleMobileNav()">
+                <i class="fa-solid fa-bars" id="mobileNavIcon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Drawer -->
+    <nav class="mobile-nav-drawer" id="mobileNavDrawer" aria-label="Mobile Navigation">
+        <ul class="mobile-nav-links">
+            <li><a href="{{ url_for('web.landing') }}"><i class="fa-solid fa-house" style="color:#fbbf24;"></i> Home Landing Page</a></li>
+            <li><a href="{{ url_for('web.dashboard') }}" class="{% if request.endpoint == 'web.dashboard' %}active{% endif %}"><i class="fa-solid fa-gauge-high" style="color:#ff334b;"></i> Command Center Dashboard</a></li>
+            <li><a href="{{ url_for('web.dashboard', tab='upload') }}"><i class="fa-solid fa-microscope" style="color:#38bdf8;"></i> Evidence Intake Workstation</a></li>
+            <li><a href="{{ url_for('web.dashboard', tab='camera') }}"><i class="fa-solid fa-video" style="color:#ef4444;"></i> Live Crime Scene Camera</a></li>
+            <li><a href="{{ url_for('web.dashboard', tab='results') }}"><i class="fa-solid fa-folder-open" style="color:#fbbf24;"></i> Case Registry & Catalog</a></li>
+            <li><a href="{{ url_for('web.api_docs') }}" class="{% if request.endpoint == 'web.api_docs' %}active{% endif %}"><i class="fa-solid fa-code" style="color:#34d399;"></i> REST API Explorer</a></li>
+            <li><a href="{{ url_for('web.logout') }}"><i class="fa-solid fa-arrow-right-from-bracket" style="color:#ff4d61;"></i> Sign Out</a></li>
+            <li><a href="tel:+18005552746"><i class="fa-solid fa-phone" style="color:#f59e0b;"></i> Dispatch: +1 (800) 555-CRIME</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="app-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-card flash-{{ category }}">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                {% if category in ('success', 'ok') %}
+                                    <i class="fa-solid fa-circle-check" style="font-size: 16px;"></i>
+                                {% elif category in ('danger', 'error') %}
+                                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
+                                {% elif category == 'warning' %}
+                                    <i class="fa-solid fa-circle-exclamation" style="font-size: 16px;"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info" style="font-size: 16px;"></i>
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                            <button type="button" class="flash-dismiss" onclick="this.closest('.flash-card').remove();" aria-label="Dismiss message">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+    <script>
+        function toggleMobileNav() {
+            const drawer = document.getElementById('mobileNavDrawer');
+            const icon = document.getElementById('mobileNavIcon');
+            if (!drawer) return;
+            drawer.classList.toggle('open');
+            if (drawer.classList.contains('open')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark');
+            } else {
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            }
+        }
+
+        // Close mobile drawer on resize or outside click
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const drawer = document.getElementById('mobileNavDrawer');
+                const icon = document.getElementById('mobileNavIcon');
+                if (drawer) drawer.classList.remove('open');
+                if (icon) {
+                    icon.classList.remove('fa-xmark');
+                    icon.classList.add('fa-bars');
+                }
+            }
+        });
+
+        // Ensure browser back/forward navigation is always fresh and never serves stale cache
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>

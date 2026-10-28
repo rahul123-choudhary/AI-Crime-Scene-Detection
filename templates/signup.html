@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investigator Registration & Secure Officer Intake — CSI Forensic AI</title>
+    <meta name="description" content="Register an official law enforcement or crime laboratory account for the CSI Forensic AI Command Center.">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-black: #07090e;
+            --primary-red: #ff2b42;
+            --primary-gradient-red: linear-gradient(135deg, #ff2b42 0%, #cf192e 100%);
+            --accent-yellow: #fbbf24;
+            --text-white: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border-glass: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+            width: 100%;
+            background-color: var(--bg-black);
+            color: var(--text-white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Ambient Background */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background-image: 
+                radial-gradient(circle at 30% 30%, rgba(255, 43, 66, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(251, 191, 36, 0.08) 0%, transparent 45%),
+                linear-gradient(180deg, #07090e 0%, #0a0e17 100%);
+        }
+
+        .signup-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Nav */
+        .signup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 50px;
+        }
+
+        .brand-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .brand-text-title {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .brand-text-title span {
+            color: var(--accent-yellow);
+        }
+
+        .btn-back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: rgba(18, 22, 32, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+            border-radius: 9999px;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+
+        .btn-back-home:hover {
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(-2px);
+        }
+
+        /* Main Form Card */
+        .card-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px 60px;
+        }
+
+        .signup-card {
+            width: 100%;
+            max-width: 470px;
+            background: #0d1017;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 38px 36px;
+            position: relative;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+        }
+
+        /* Glowing Corner Brackets */
+        .corner-bracket-tl {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            width: 32px;
+            height: 32px;
+            border-top: 3px solid #ff2b42;
+            border-left: 3px solid #ff2b42;
+            border-top-left-radius: 18px;
+            box-shadow: -2px -2px 12px rgba(255, 43, 66, 0.6);
+        }
+
+        .corner-bracket-tr {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 32px;
+            height: 32px;
+            border-top: 3px solid #fbbf24;
+            border-right: 3px solid #fbbf24;
+            border-top-right-radius: 18px;
+            box-shadow: 2px -2px 12px rgba(251, 191, 36, 0.6);
+        }
+
+        .corner-bracket-br {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 32px;
+            height: 32px;
+            border-bottom: 3px solid #fbbf24;
+            border-right: 3px solid #fbbf24;
+            border-bottom-right-radius: 18px;
+            box-shadow: 2px 2px 12px rgba(251, 191, 36, 0.6);
+        }
+
+        .corner-bracket-bl {
+            position: absolute;
+            bottom: -2px;
+            left: -2px;
+            width: 32px;
+            height: 32px;
+            border-bottom: 3px solid #ff2b42;
+            border-left: 3px solid #ff2b42;
+            border-bottom-left-radius: 18px;
+            box-shadow: -2px 2px 12px rgba(255, 43, 66, 0.6);
+        }
+
+        /* Brand Icon Header */
+        .card-brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .card-subtitle {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 26px;
+        }
+
+        /* Inputs */
+        .form-input-group {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .input-eye-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .input-eye-toggle:hover {
+            color: #ffffff;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 13px 44px;
+            background: #121622;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .text-input:focus {
+            border-color: #ff2b42;
+            box-shadow: 0 0 12px rgba(255, 43, 66, 0.25);
+            background: #151a28;
+        }
+
+        .text-input::placeholder {
+            color: var(--text-dim);
+            font-size: 13.5px;
+        }
+
+        /* Grid row */
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        /* Submit Button */
+        .btn-submit-signup {
+            width: 100%;
+            padding: 13px 0;
+            background: var(--primary-gradient-red);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 43, 66, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+            margin-top: 8px;
+            margin-bottom: 20px;
+        }
+
+        .btn-submit-signup:hover {
+            box-shadow: 0 6px 25px rgba(255, 43, 66, 0.65);
+            transform: translateY(-1px);
+        }
+
+        /* Footer */
+        .card-footer {
+            text-align: center;
+            font-size: 13.5px;
+            color: var(--text-muted);
+        }
+
+        .card-footer a {
+            color: var(--accent-yellow);
+            text-decoration: none;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        .card-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .signup-header {
+                padding: 18px 24px;
+            }
+            .signup-card {
+                padding: 28px 22px;
+            }
+            .form-grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg"></div>
+
+    <div class="signup-container">
+        <!-- Header -->
+        <header class="signup-header">
+            <a href="{{ url_for('web.dashboard') }}" class="brand-logo-wrap" title="Go to Command Dashboard">
+                <div style="width: 32px; height: 32px;">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 5 L88 22 V52 C88 74 50 95 50 95 C50 95 12 74 12 52 V22 Z" fill="#121620" stroke="url(#shieldGradS)" stroke-width="5"/>
+                        <circle cx="50" cy="48" r="22" stroke="#ff2b42" stroke-width="4" stroke-dasharray="8 4"/>
+                        <line x1="50" y1="20" x2="50" y2="76" stroke="#fbbf24" stroke-width="3"/>
+                        <line x1="22" y1="48" x2="78" y2="48" stroke="#fbbf24" stroke-width="3"/>
+                        <circle cx="50" cy="48" r="5" fill="#ff2b42"/>
+                        <defs>
+                            <linearGradient id="shieldGradS" x1="0" y1="0" x2="100" y2="100">
+                                <stop offset="0%" stop-color="#ff2b42"/>
+                                <stop offset="100%" stop-color="#fbbf24"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="brand-text-title">Crime Scene <span>Detection</span></div>
+            </a>
+
+            <a href="{{ url_for('web.dashboard') }}" class="btn-back-home" title="Return to Command Center">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Command Center</span>
+            </a>
+        </header>
+
+        <!-- Form Card -->
+        <main class="card-wrapper">
+            <div class="signup-card">
+                <!-- Glowing Corner Brackets -->
+                <div class="corner-bracket-tl"></div>
+                <div class="corner-bracket-tr"></div>
+                <div class="corner-bracket-br"></div>
+                <div class="corner-bracket-bl"></div>
+
+                <!-- Brand Header -->
+                <div class="card-brand-header">
+                    <div style="width: 38px; height: 38px;">
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M50 5 L88 22 V52 C88 74 50 95 50 95 C50 95 12 74 12 52 V22 Z" fill="#121620" stroke="url(#shieldGradM)" stroke-width="5"/>
+                            <circle cx="50" cy="48" r="22" stroke="#ff2b42" stroke-width="4" stroke-dasharray="8 4"/>
+                            <line x1="50" y1="20" x2="50" y2="76" stroke="#fbbf24" stroke-width="3"/>
+                            <line x1="22" y1="48" x2="78" y2="48" stroke="#fbbf24" stroke-width="3"/>
+                            <circle cx="50" cy="48" r="5" fill="#ff2b42"/>
+                            <defs>
+                                <linearGradient id="shieldGradM" x1="0" y1="0" x2="100" y2="100">
+                                    <stop offset="0%" stop-color="#ff2b42"/>
+                                    <stop offset="100%" stop-color="#fbbf24"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;">CRIME SCENE</div>
+                        <div style="font-size: 13px; font-weight: 800; color: var(--accent-yellow); letter-spacing: 0.5px;">FORENSIC NETWORK</div>
+                    </div>
+                </div>
+
+                <h1 class="card-title">Create Account</h1>
+                <p class="card-subtitle">Register new investigator credentials</p>
+
+                <form action="{{ url_for('web.signup') }}" method="post" id="officerSignupForm" autocomplete="off">
+                    <!-- Full Name -->
+                    <div class="form-input-group">
+                        <i class="fa-regular fa-user input-icon"></i>
+                        <input type="text" name="fullname" id="signupFullname" class="text-input" placeholder="Officer Full Name" value="" autocomplete="off" required>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-input-group">
+                        <i class="fa-regular fa-envelope input-icon"></i>
+                        <input type="email" name="email" id="signupEmail" class="text-input" placeholder="Official Police / Lab Email" value="" autocomplete="off" required>
+                    </div>
+
+                    <!-- Badge & Unit -->
+                    <div class="form-grid-2">
+                        <div style="position: relative;">
+                            <i class="fa-solid fa-id-badge input-icon"></i>
+                            <input type="text" name="badge" id="signupBadge" class="text-input" style="padding-left: 42px; padding-right: 12px;" placeholder="Badge ID (CS-8842)" value="" autocomplete="off">
+                        </div>
+                        <div style="position: relative;">
+                            <i class="fa-solid fa-building-shield input-icon"></i>
+                            <input type="text" name="unit" id="signupUnit" class="text-input" style="padding-left: 42px; padding-right: 12px;" placeholder="Unit / Bureau" value="" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <!-- Password with Eye Toggle -->
+                    <div class="form-input-group">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" id="signupPassword" name="password" class="text-input" placeholder="Create Access Password" value="" autocomplete="new-password" required>
+                        <i class="fa-regular fa-eye input-eye-toggle" onclick="togglePasswordVisibility()"></i>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn-submit-signup">
+                        <span>Register Officer Account</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="card-footer" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div>Already have an account? <a href="{{ url_for('web.landing') }}">Sign In</a></div>
+                    <div style="font-size: 11.5px; color: var(--text-dim); margin-top: 6px;">
+                        Forensic Dispatch: <a href="tel:+18005552746" style="color: var(--accent-yellow); text-decoration: none;">+1 (800) 555-CRIME</a> &bull;
+                        <a href="mailto:dispatch@csi-forensic.ai" style="color: #38bdf8; text-decoration: none;">dispatch@csi-forensic.ai</a>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">
+                        &copy; 2026 CSI Forensic AI Intelligence Systems. All Rights Reserved.
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function togglePasswordVisibility() {
+            const pwd = document.getElementById('signupPassword');
+            if (pwd) {
+                pwd.type = pwd.type === 'password' ? 'text' : 'password';
+            }
+        }
+
+        // Always ensure input fields are empty on load
+        window.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('officerSignupForm');
+            if (form) {
+                form.reset();
+                form.querySelectorAll('input').forEach(inp => inp.value = '');
+            }
+        });
+        window.addEventListener('pageshow', function() {
+            const form = document.getElementById('officerSignupForm');
+            if (form) {
+                form.reset();
+                form.querySelectorAll('input').forEach(inp => inp.value = '');
+            }
+        });
+
+        // If user presses browser Back or reloads on signup page, redirect directly to home page
+        try {
+            history.pushState(null, document.title, window.location.href);
+            window.addEventListener('popstate', function () {
+                window.location.replace('/');
+            });
+
+            window.addEventListener('pageshow', function (event) {
+                const navEntries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+                const isBackOrReload = event.persisted ||
+                                       (navEntries && navEntries.length > 0 && ['back_forward', 'reload'].includes(navEntries[0].type)) ||
+                                       (window.performance && window.performance.navigation && [1, 2].includes(window.performance.navigation.type));
+                if (isBackOrReload) {
+                    window.location.replace('/');
+                }
+            });
+        } catch (e) {}
+    </script>
+</body>
+</html>

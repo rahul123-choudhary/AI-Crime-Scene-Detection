@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service & Operational Protocols — CSI Forensic AI</title>
+    <meta name="description" content="Official operating protocols, legal terms, and evidence admissibility disclaimers for CSI Forensic AI Command Center.">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-black: #07090e;
+            --primary-red: #ff2b42;
+            --accent-yellow: #fbbf24;
+            --accent-blue: #38bdf8;
+            --accent-emerald: #10b981;
+            --text-white: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border-glass: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.7;
+        }
+
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background-image: 
+                radial-gradient(circle at 75% 20%, rgba(251, 191, 36, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 20% 80%, rgba(255, 43, 66, 0.08) 0%, transparent 45%),
+                linear-gradient(180deg, #07090e 0%, #0a0e17 100%);
+        }
+
+        .content-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        .page-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-glass);
+            margin-bottom: 40px;
+        }
+
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .brand-name {
+            font-size: 16px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .brand-name span {
+            color: var(--accent-yellow);
+        }
+
+        .btn-return {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.25s ease;
+        }
+
+        .btn-return:hover {
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .terms-hero {
+            margin-bottom: 48px;
+        }
+
+        .terms-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(251, 191, 36, 0.12);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            color: var(--accent-yellow);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        h1.terms-title {
+            font-size: 36px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .terms-meta {
+            font-size: 13.5px;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .legal-card {
+            background: rgba(14, 18, 28, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .legal-card h2 {
+            font-size: 19px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legal-card h2 i {
+            color: var(--primary-red);
+            font-size: 17px;
+        }
+
+        .legal-card p {
+            font-size: 14.5px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .legal-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+
+        .legal-card li {
+            font-size: 14px;
+            color: #cbd5e1;
+            padding: 6px 0 6px 24px;
+            position: relative;
+        }
+
+        .legal-card li::before {
+            content: "§";
+            position: absolute;
+            left: 0;
+            color: var(--accent-yellow);
+            font-weight: bold;
+        }
+
+        .terms-footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            color: var(--text-dim);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .terms-footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .terms-footer a:hover {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"></div>
+
+    <div class="content-container">
+        <nav class="page-nav">
+            <a href="{{ url_for('web.landing') }}" class="brand-link">
+                <div style="width: 32px; height: 32px;">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 5 L88 22 V52 C88 74 50 95 50 95 C50 95 12 74 12 52 V22 Z" fill="#121620" stroke="url(#shieldGradT)" stroke-width="5"/>
+                        <circle cx="50" cy="48" r="22" stroke="#ff2b42" stroke-width="4" stroke-dasharray="8 4"/>
+                        <line x1="50" y1="20" x2="50" y2="76" stroke="#fbbf24" stroke-width="3"/>
+                        <line x1="22" y1="48" x2="78" y2="48" stroke="#fbbf24" stroke-width="3"/>
+                        <circle cx="50" cy="48" r="5" fill="#ff2b42"/>
+                        <defs>
+                            <linearGradient id="shieldGradT" x1="0" y1="0" x2="100" y2="100">
+                                <stop offset="0%" stop-color="#ff2b42"/>
+                                <stop offset="100%" stop-color="#fbbf24"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="brand-name">Crime Scene <span>Detection</span></div>
+            </a>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <a href="{{ url_for('web.privacy_policy') }}" class="btn-return">
+                    <i class="fa-solid fa-user-shield"></i> Privacy Policy
+                </a>
+                <a href="{{ url_for('web.dashboard') }}" class="btn-return">
+                    <i class="fa-solid fa-gauge-high"></i> Command Center
+                </a>
+            </div>
+        </nav>
+
+        <header class="terms-hero">
+            <div class="terms-badge">
+                <i class="fa-solid fa-scale-balanced"></i> Law Enforcement Operational Framework
+            </div>
+            <h1 class="terms-title">Terms of Service & Evidence Protocols</h1>
+            <div class="terms-meta">
+                <span>VERSION: 3.2.0</span> &bull; <span>JURISDICTION: APPLICABLE LAW ENFORCEMENT STATUTES</span> &bull; <span>STATUS: ACTIVE & BINDING</span>
+            </div>
+        </header>
+
+        <main>
+            <section class="legal-card">
+                <h2><i class="fa-solid fa-gavel"></i> 1. Authorized Law Enforcement Use Only</h2>
+                <p>This platform constitutes an official law enforcement diagnostic tool. Unauthorized access, account spoofing, credential sharing, or extraction of crime scene media outside official prosecutorial duties is strictly prohibited and subject to criminal prosecution under federal and state statutes.</p>
+                <ul>
+                    <li>Users must possess active, verified official police, laboratory, or judicial credentials.</li>
+                    <li>Credentials and session cookies are non-transferable and tied to registered officer badge numbers.</li>
+                    <li>Attempted security tampering triggers automated forensic audit logs and IP lockout.</li>
+                </ul>
+            </section>
+
+            <section class="legal-card">
+                <h2><i class="fa-solid fa-brain"></i> 2. Neural Detection & Human-in-the-Loop Standard</h2>
+                <p>While the YOLOv8 and Dual Specialist computer vision engines demonstrate industry-leading precision in weapon localization and evidence tagging, neural classifications constitute probabilistic investigative aids:</p>
+                <ul>
+                    <li>All bounding box detections and threat score metrics must be verified by a qualified human investigator.</li>
+                    <li>The system is designed to accelerate evidence cataloging, not replace certified forensic testimony.</li>
+                    <li>Court-admissible PDF reports must be reviewed and signed by the assigned case investigator.</li>
+                </ul>
+            </section>
+
+            <section class="legal-card">
+                <h2><i class="fa-solid fa-link"></i> 3. Chain of Custody & Evidentiary Integrity</h2>
+                <p>Digital files ingested into the platform receive automated SHA-256 digital digests recorded in tamper-evident audit logs. Investigators agree not to introduce fabricated or altered media intended to mislead criminal proceedings.</p>
+            </section>
+
+            <section class="legal-card">
+                <h2><i class="fa-solid fa-trash-can"></i> 4. Account Termination & Case Archival</h2>
+                <p>Agencies retain the right to archive or expunge case records and user profiles at any time via the Settings console. Permanent deletion purges local SQLite records, synchronized Cloud Firestore nodes, and audit trails in compliance with NIST 800-88.</p>
+            </section>
+        </main>
+
+        <footer class="terms-footer">
+            <div>&copy; 2026 CSI Forensic AI Intelligence Systems. All Rights Reserved.</div>
+            <div style="display: flex; gap: 16px;">
+                <a href="{{ url_for('web.privacy_policy') }}">Privacy Policy</a>
+                <a href="{{ url_for('web.terms_of_service') }}">Terms of Service</a>
+                <a href="{{ url_for('web.dashboard') }}">Command Center</a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

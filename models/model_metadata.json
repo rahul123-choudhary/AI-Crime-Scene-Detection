@@ -1,0 +1,13 @@
+{
+  "model_file": "pretrained_weapon_detector.pt",
+  "class_names": [
+    "Grenade",
+    "Gun",
+    "Knife",
+    "Pistol",
+    "handgun",
+    "rifle"
+  ],
+  "source_weights": "GingerBrains/object-detection best.pt",
+  "note": "Active ready-made 6-class weapon model. It replaces the inaccurate legacy 10-class checkpoint for immediate local use. Training scripts/train_yolo.py will deploy a verified 20-class model and make it active automatically."
+}

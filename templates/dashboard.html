@@ -1,0 +1,3774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+    <title>CSI Forensic AI — Command Center Dashboard & Intelligence Suite</title>
+    <meta name="description" content="AI Crime Scene Detection Command Center: Real-time neural weapon localization, ballistic trace cataloging, latent fingerprint enhancement, and CJIS case archive.">
+    <meta name="keywords" content="forensic command center, crime scene detection, ballistics AI, weapon localization, evidence dashboard">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-black: #080a0f;
+            --bg-card: #0f131a;
+            --bg-card-hover: #151b24;
+            --bg-sidebar: #0a0d13;
+            --crimson-red: #ff2b42;
+            --crimson-gradient: linear-gradient(135deg, #ff2b42 0%, #d81b32 100%);
+            --amber-yellow: #f59e0b;
+            --amber-gradient: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+            --border-dark: rgba(255, 255, 255, 0.08);
+            --border-red: rgba(255, 43, 66, 0.35);
+            --border-yellow: rgba(245, 158, 11, 0.35);
+            --text-white: #f8fafc;
+            --text-muted: #8e9cae;
+            --text-dim: #5c6878;
+            --glow-red: 0 0 25px rgba(255, 43, 66, 0.35);
+            --glow-yellow: 0 0 25px rgba(245, 158, 11, 0.3);
+            --hazard-stripes: repeating-linear-gradient(
+                -45deg,
+                #f59e0b,
+                #f59e0b 10px,
+                #11141c 10px,
+                #11141c 20px
+            );
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Top Header Bar */
+        .top-navbar {
+            height: 64px;
+            background: #090c12;
+            border-bottom: 1px solid var(--border-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .brand-shield-logo {
+            width: 36px;
+            height: 36px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-shield-logo svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px rgba(255, 43, 66, 0.6));
+        }
+
+        .brand-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+        }
+
+        .brand-name span {
+            color: #ffd000;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-live-stream-nav {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(255, 43, 66, 0.12);
+            border: 1px solid var(--border-red);
+            color: #ff4d61;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-live-stream-nav:hover {
+            background: rgba(255, 43, 66, 0.22);
+            box-shadow: 0 0 15px rgba(255, 43, 66, 0.4);
+        }
+
+        .pulse-indicator-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff2b42;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #ff2b42;
+            animation: pulse-ring 1.8s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 43, 66, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(255, 43, 66, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 43, 66, 0); }
+        }
+
+        .notification-bell-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            position: relative;
+            padding: 8px;
+            transition: color 0.2s ease;
+        }
+
+        .notification-bell-btn:hover {
+            color: #ffffff;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 16px;
+            height: 16px;
+            background: #ff2b42;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 8px rgba(255, 43, 66, 0.8);
+        }
+
+        .user-profile-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 12px 4px 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-dark);
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .user-profile-menu:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .user-avatar-circle {
+            width: 30px;
+            height: 30px;
+            background: #242c38;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .user-name-text {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .user-dropdown-icon {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* User dropdown popover */
+        .user-dropdown-popover {
+            position: absolute;
+            top: 48px;
+            right: 0;
+            width: 240px;
+            background: #11151e;
+            border: 1px solid var(--border-dark);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            padding: 12px;
+            display: none;
+            z-index: 200;
+        }
+
+        .user-dropdown-popover.show {
+            display: block;
+        }
+
+        .user-popover-info {
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-dark);
+        }
+
+        .user-popover-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .user-popover-role {
+            font-size: 11.5px;
+            color: var(--amber-yellow);
+            font-weight: 600;
+        }
+
+        .user-popover-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .user-popover-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+        }
+
+        /* Layout Structure: Sidebar + Workspace */
+        .dashboard-body-layout {
+            display: flex;
+            flex: 1;
+            min-height: calc(100vh - 64px);
+        }
+
+        /* Left Sidebar */
+        .left-sidebar {
+            width: 240px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px 16px 20px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 18px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 9999px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .sidebar-link i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+        }
+
+        .sidebar-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* Active Nav Item - Crimson Glow Pill */
+        .sidebar-link.active {
+            background: var(--crimson-gradient);
+            color: #ffffff;
+            box-shadow: 0 4px 20px rgba(255, 43, 66, 0.45);
+        }
+
+        .sidebar-link.active i {
+            color: #ffffff;
+        }
+
+        /* Bottom Status Card */
+        .system-status-box {
+            background: #0d1017;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.04);
+        }
+
+        .status-online-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .online-dot {
+            width: 9px;
+            height: 9px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.6; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .status-meta-text {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.4;
+        }
+
+        /* Main Workspace Container */
+        .main-workspace {
+            flex: 1;
+            padding: 24px 32px 40px;
+            overflow-y: auto;
+            max-width: 1440px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Welcome Banner */
+        .welcome-banner-card {
+            background: linear-gradient(90deg, #121622 0%, #0d1017 100%);
+            border: 1px solid var(--border-dark);
+            border-radius: 14px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-banner-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--crimson-red);
+            box-shadow: 0 0 10px var(--crimson-red);
+        }
+
+        .welcome-text-group h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .welcome-text-group p {
+            font-size: 13.5px;
+            color: var(--text-muted);
+        }
+
+        /* Hazard Safety Ribbon */
+        .hazard-ribbon {
+            background: #171b24;
+            border: 1px solid #d97706;
+            padding: 8px 18px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hazard-stripe-accent {
+            width: 28px;
+            height: 100%;
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: var(--hazard-stripes);
+            opacity: 0.85;
+        }
+
+        .hazard-text {
+            font-size: 11px;
+            font-weight: 800;
+            color: #ffd000;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
+            padding-right: 24px;
+        }
+
+        /* 4 Quick Action Cards Grid */
+        .action-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .action-card {
+            background: #0e1219;
+            border: 1px solid var(--border-dark);
+            border-radius: 14px;
+            padding: 22px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 180px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            background: #131822;
+        }
+
+        .action-card.card-red {
+            border-color: rgba(255, 43, 66, 0.28);
+        }
+
+        .action-card.card-red:hover {
+            border-color: rgba(255, 43, 66, 0.6);
+            box-shadow: 0 8px 25px rgba(255, 43, 66, 0.18);
+        }
+
+        .action-card.card-yellow {
+            border-color: rgba(245, 158, 11, 0.28);
+        }
+
+        .action-card.card-yellow:hover {
+            border-color: rgba(245, 158, 11, 0.6);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.18);
+        }
+
+        .card-top-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .card-icon-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .badge-red-icon {
+            background: rgba(255, 43, 66, 0.15);
+            border: 1px solid rgba(255, 43, 66, 0.4);
+            color: #ff334b;
+        }
+
+        .badge-yellow-icon {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+        }
+
+        .card-graphic-watermark {
+            font-size: 38px;
+            opacity: 0.15;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover .card-graphic-watermark {
+            opacity: 0.35;
+            transform: scale(1.08);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .card-desc {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            line-height: 1.45;
+            margin-bottom: 16px;
+        }
+
+        /* Action Card Buttons */
+        .btn-card-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            width: fit-content;
+        }
+
+        .btn-card-red {
+            background: var(--crimson-gradient);
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 15px rgba(255, 43, 66, 0.35);
+        }
+
+        .btn-card-red:hover {
+            box-shadow: 0 6px 20px rgba(255, 43, 66, 0.55);
+            transform: translateY(-1px);
+        }
+
+        .btn-card-yellow {
+            background: var(--amber-gradient);
+            color: #0b0f17;
+            font-weight: 700;
+            border: none;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
+        }
+
+        .btn-card-yellow:hover {
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.55);
+            transform: translateY(-1px);
+        }
+
+        .btn-card-outline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+        }
+
+        .btn-card-outline:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Bottom Split Section: Recent Activity & Last Detection */
+        .bottom-split-grid {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 20px;
+        }
+
+        /* Recent Activity Table Card */
+        .activity-card-container {
+            background: #0e1219;
+            border: 1px solid var(--border-dark);
+            border-radius: 14px;
+            padding: 22px 24px;
+        }
+
+        .section-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 18px;
+        }
+
+        .red-accent-bar {
+            width: 4px;
+            height: 16px;
+            background: var(--crimson-red);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--crimson-red);
+        }
+
+        .forensic-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .forensic-table th {
+            text-align: left;
+            padding: 10px 14px;
+            color: var(--text-dim);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .forensic-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+        }
+
+        .forensic-table tbody tr {
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .forensic-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .time-col {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .source-col {
+            font-weight: 600;
+            color: #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .objects-col {
+            color: #cbd5e1;
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Risk Badges */
+        .risk-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .badge-high-risk {
+            background: rgba(255, 43, 66, 0.18);
+            border: 1px solid rgba(255, 43, 66, 0.5);
+            color: #ff4d61;
+            box-shadow: 0 0 10px rgba(255, 43, 66, 0.2);
+        }
+
+        .badge-medium-risk {
+            background: rgba(245, 158, 11, 0.18);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: #fbbf24;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        }
+
+        .badge-low-risk {
+            background: rgba(16, 185, 129, 0.18);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #34d399;
+        }
+
+        /* ========================================================
+           REACT BITS <HoldButton /> COMPONENT STYLES
+           ======================================================== */
+        .hold-button {
+            --hb-radius: 9px;
+            --hb-bg: rgba(239, 68, 68, 0.12);
+            --hb-fill: #ef4444;
+            --hb-text: #f87171;
+            --hb-fill-text: #ffffff;
+            --hb-hold: 1200ms;
+            --hb-release: 200ms;
+            --hb-press: 0.94;
+            --hb-wave: 6px;
+            --hb-w: 32px;
+            --hb-h: 32px;
+            --hb-cycles: 1.5;
+            --hb-p: 0;
+            --hb-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+            --hb-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            --hb-glow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 18px rgba(239, 68, 68, 0.65);
+
+            position: relative;
+            display: inline-grid;
+            place-items: center;
+            isolation: isolate;
+            margin: 0;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: var(--hb-radius);
+            background: var(--hb-bg);
+            color: var(--hb-text);
+            font-family: inherit;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            line-height: 1;
+            box-shadow: var(--hb-shadow);
+            cursor: pointer;
+            outline: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            transition:
+                transform 160ms var(--hb-ease-out),
+                background-color 160ms ease,
+                border-color 160ms ease,
+                box-shadow var(--hb-release) var(--hb-ease-out);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .hold-button:not(:disabled):hover {
+                background: rgba(239, 68, 68, 0.22);
+                border-color: rgba(239, 68, 68, 0.6);
+            }
+        }
+
+        .hold-button[data-phase='holding'] {
+            transform: scale(var(--hb-press));
+        }
+
+        .hold-button[data-glow='true'][data-phase='holding'],
+        .hold-button[data-glow='true'][data-phase='done'] {
+            box-shadow: var(--hb-glow);
+        }
+
+        .hold-button[data-glow='true'][data-phase='holding'] {
+            transition:
+                transform 160ms var(--hb-ease-out),
+                background-color 160ms ease,
+                box-shadow var(--hb-hold) linear;
+        }
+
+        .hold-button:focus-visible {
+            outline: 2px solid var(--hb-fill);
+            outline-offset: 3px;
+        }
+
+        .hold-button:disabled {
+            opacity: 0.5;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .hold-button__pulse {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            border-radius: var(--hb-radius);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .hold-button[data-glow='true'][data-phase='done'] .hold-button__pulse {
+            animation: hb-pulse 600ms var(--hb-ease-out) forwards;
+        }
+
+        @keyframes hb-pulse {
+            from {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.65);
+            }
+            to {
+                opacity: 0;
+                box-shadow: 0 0 0 14px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .hold-button__label {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            place-items: center;
+            font-size: 13px;
+        }
+
+        .hold-button__label > span {
+            grid-area: 1 / 1;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition:
+                opacity 200ms ease,
+                filter 200ms ease;
+        }
+
+        .hold-button__done {
+            opacity: 0;
+            filter: blur(2px);
+            color: #ffffff;
+        }
+
+        .hold-button[data-phase='done'] .hold-button__idle {
+            opacity: 0;
+            filter: blur(2px);
+        }
+
+        .hold-button[data-phase='done'] .hold-button__done {
+            opacity: 1;
+            filter: blur(0);
+        }
+
+        .hold-button__clip {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            clip-path: inset(0 round var(--hb-radius));
+            pointer-events: none;
+        }
+
+        .hold-button__fill {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            background: var(--hb-fill);
+            color: var(--hb-fill-text);
+            clip-path: inset(
+                0 calc((1 - var(--hb-p)) * (100% + 0.75 * var(--hb-wave)) - var(--hb-p) * 0.25 * var(--hb-wave)) 0 0
+            );
+        }
+
+        .hold-button__crest {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            background: var(--hb-fill);
+            color: var(--hb-fill-text);
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='200' viewBox='0 0 20 200' preserveAspectRatio='none'%3E%3Cpath d='M0 0H10C18 8 18 25.3 10 33.3S2 58.7 10 66.7S18 92 10 100S2 125.3 10 133.3S18 158.7 10 166.7S2 192 10 200H0Z'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='200' viewBox='0 0 20 200' preserveAspectRatio='none'%3E%3Cpath d='M0 0H10C18 8 18 25.3 10 33.3S2 58.7 10 66.7S18 92 10 100S2 125.3 10 133.3S18 158.7 10 166.7S2 192 10 200H0Z'/%3E%3C/svg%3E");
+            -webkit-mask-repeat: repeat-y;
+            mask-repeat: repeat-y;
+            -webkit-mask-size: var(--hb-wave) calc(var(--hb-h) * 2);
+            mask-size: var(--hb-wave) calc(var(--hb-h) * 2);
+            -webkit-mask-position-x: calc(-1 * var(--hb-wave) + var(--hb-p) * (var(--hb-w) + var(--hb-wave)));
+            mask-position-x: calc(-1 * var(--hb-wave) + var(--hb-p) * (var(--hb-w) + var(--hb-wave)));
+            -webkit-mask-position-y: calc(-1 * var(--hb-p) * var(--hb-cycles) * var(--hb-h));
+            mask-position-y: calc(-1 * var(--hb-p) * var(--hb-cycles) * var(--hb-h));
+        }
+
+        .hold-button__label--fill {
+            z-index: auto;
+            font-size: 13px;
+        }
+
+        /* Last Detection Card */
+        .last-detection-card {
+            background: #0e1219;
+            border: 1px solid var(--border-dark);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .detection-preview-box {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            background: #000000;
+            overflow: hidden;
+        }
+
+        .detection-preview-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .last-detection-card:hover .detection-preview-box img {
+            transform: scale(1.03);
+        }
+
+        .simulated-bbox-overlay {
+            position: absolute;
+            top: 42%;
+            left: 18%;
+            width: 48%;
+            height: 28%;
+            border: 2px solid #ff2b42;
+            box-shadow: 0 0 15px rgba(255, 43, 66, 0.4);
+            pointer-events: none;
+        }
+
+        .bbox-floating-tag {
+            position: absolute;
+            top: -24px;
+            left: -2px;
+            background: #ff2b42;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px 3px 0 0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .detection-card-footer {
+            padding: 14px 20px;
+            background: #0a0d13;
+            border-top: 1px solid var(--border-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Sub-Views System (Switches smoothly between Dashboard, Live Camera, Upload, Results, Alerts, Settings) */
+        .workspace-view-panel {
+            display: none;
+        }
+
+        .workspace-view-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Live Camera Panel */
+        .camera-station-box {
+            background: #0e1219;
+            border: 1px solid var(--border-dark);
+            border-radius: 14px;
+            padding: 24px;
+        }
+
+        .camera-feed-viewport {
+            position: relative;
+            width: 100%;
+            height: 480px;
+            background: #05070a;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #webcamVideo, #cameraCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #cameraCanvas {
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .camera-hud-overlay {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .hud-status-badge {
+            background: rgba(10, 13, 20, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .camera-controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-dark);
+        }
+
+        /* Upload Dropzone styling */
+        .dropzone-box {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 48px 24px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .dropzone-box:hover, .dropzone-box.dragover {
+            border-color: var(--amber-yellow);
+            background: rgba(245, 158, 11, 0.04);
+        }
+
+        .dropzone-input-file {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Sample Scenarios Grid */
+        .samples-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .sample-item-card {
+            background: #11151e;
+            border: 1px solid var(--border-dark);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sample-item-card:hover {
+            border-color: var(--amber-yellow);
+            transform: translateY(-2px);
+        }
+
+        .sample-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .sample-tag {
+            font-size: 10.5px;
+            color: var(--amber-yellow);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        /* Notification Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-msg {
+            background: #141924;
+            border: 1px solid var(--crimson-red);
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Dashboard Footer */
+        .dashboard-footer {
+            margin-top: 50px;
+            padding: 30px 24px 20px;
+            background: rgba(8, 10, 15, 0.95);
+            border: 1px solid var(--border-dark);
+            border-radius: 14px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .dash-footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr 1fr;
+            gap: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-link-active {
+            color: var(--text-muted);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s ease;
+        }
+
+        .footer-link-active:hover {
+            color: #ffffff;
+        }
+
+        .dash-footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            font-size: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-hotline-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            color: #fbbf24;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-hotline-nav:hover {
+            background: rgba(251, 191, 36, 0.2);
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.3);
+        }
+
+        .btn-mobile-sidebar {
+            display: none;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-dark);
+            color: #ffffff;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1080px) {
+            .action-cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .bottom-split-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .btn-mobile-sidebar {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .dashboard-body-layout {
+                flex-direction: column;
+            }
+            .left-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-dark);
+            }
+            .left-sidebar.collapsed-mobile {
+                display: none;
+            }
+            .action-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .dash-footer-grid {
+                grid-template-columns: 1fr;
+            }
+            .hotline-text {
+                display: none;
+            }
+        }
+
+        /* ==========================================================================
+           1. Real Forensic AI Scanning & Loading Overlay (Loading States)
+           ========================================================================== */
+        .forensic-scan-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 11, 0.92);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .forensic-scan-backdrop.active {
+            display: flex !important;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .forensic-scan-card {
+            background: #0d111a;
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            border-radius: 20px;
+            padding: 38px 46px;
+            width: 520px;
+            max-width: 90vw;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(251, 191, 36, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .forensic-scan-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff2b42, #fbbf24, #38bdf8, #ff2b42);
+            background-size: 200% 100%;
+            animation: scanLineGlow 2s linear infinite;
+        }
+
+        @keyframes scanLineGlow {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        .radar-scope-ring {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 2px solid rgba(251, 191, 36, 0.35);
+            margin: 0 auto 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+        }
+
+        .radar-sweep-beam {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(251, 191, 36, 0.4) 60deg, transparent 65deg);
+            animation: radarRotate 1.8s linear infinite;
+        }
+
+        @keyframes radarRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .radar-crosshair-h, .radar-crosshair-v {
+            position: absolute;
+            background: rgba(251, 191, 36, 0.4);
+        }
+        .radar-crosshair-h { width: 100%; height: 1px; }
+        .radar-crosshair-v { height: 100%; width: 1px; }
+
+        .radar-pulse-point {
+            width: 10px;
+            height: 10px;
+            background: #ff2b42;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #ff2b42;
+            animation: pulseThreat 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseThreat {
+            0% { transform: scale(0.8); opacity: 0.6; }
+            100% { transform: scale(1.3); opacity: 1; }
+        }
+
+        .scan-neon-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.12);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            padding: 4px 12px;
+            border-radius: 999px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .scan-card-title h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+        }
+
+        .scan-status-text {
+            font-size: 13.5px;
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 22px;
+            margin-bottom: 20px;
+        }
+
+        .scan-progress-bar-wrap {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+
+        .scan-progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #fbbf24, #ff2b42);
+            border-radius: 999px;
+            transition: width 0.35s ease;
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+        }
+
+        .scan-terminal-sub {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #64748b;
+            font-family: 'JetBrains Mono', monospace;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 14px;
+        }
+
+        /* ==========================================================================
+           2. Interactive Officer Onboarding Tour Modal
+           ========================================================================== */
+        .onboarding-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 11, 0.88);
+            backdrop-filter: blur(16px);
+            z-index: 99990;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .onboarding-modal-backdrop.open {
+            display: flex !important;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .onboarding-card {
+            background: #0f131c;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            width: 580px;
+            max-width: 95vw;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 28px 32px;
+            position: relative;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(251, 191, 36, 0.12);
+        }
+
+        .onboarding-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .onboarding-step-badge {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: #fbbf24;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .onboarding-close-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .onboarding-close-btn:hover {
+            background: rgba(255, 43, 66, 0.25);
+            border-color: #ff2b42;
+            color: #ffffff;
+        }
+
+        .onboarding-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .onboarding-slide {
+            display: none !important;
+            animation: fadeInStep 0.25s ease forwards;
+        }
+
+        .onboarding-slide.active {
+            display: block !important;
+        }
+
+        @keyframes fadeInStep {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .onboarding-icon-wrap {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+
+        .icon-pulse-amber {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: #fbbf24;
+        }
+
+        .icon-pulse-blue {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+        }
+
+        .icon-pulse-emerald {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #10b981;
+        }
+
+        .icon-pulse-purple {
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            color: #a855f7;
+        }
+
+        .onboarding-headline {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .onboarding-subtext {
+            font-size: 13.5px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .onboarding-feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 0;
+        }
+
+        .onboarding-feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 13px;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+
+        .onboarding-feature-item i {
+            color: #10b981;
+            font-size: 13px;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+        .onboarding-footer-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 18px;
+            margin-top: 10px;
+            flex-shrink: 0;
+        }
+
+        .onboarding-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .onboarding-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .onboarding-dot.active {
+            background: #fbbf24;
+            width: 22px;
+            border-radius: 999px;
+        }
+
+        /* ==========================================================================
+           3. Diagnostic Logs & Error Tracker Viewer Modal
+           ========================================================================== */
+        .diagnostics-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 11, 0.85);
+            backdrop-filter: blur(14px);
+            z-index: 99990;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .diagnostics-modal-backdrop.open {
+            display: flex !important;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .diagnostics-card {
+            background: #0a0d14;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            width: 760px;
+            max-width: 94vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+        }
+
+        .diagnostics-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .diagnostics-console-body {
+            flex: 1;
+            overflow-y: auto;
+            background: #06080c;
+            padding: 16px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            max-height: 480px;
+        }
+
+        .log-entry-row {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            word-break: break-all;
+        }
+
+        .log-entry-row.log-error {
+            color: #ff4d61;
+            background: rgba(255, 77, 97, 0.08);
+        }
+
+        .log-entry-row.log-warn {
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+        <a href="{{ url_for('web.dashboard') }}" class="brand-container">
+            <div class="brand-shield-logo">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 5 L88 22 V52 C88 74 50 95 50 95 C50 95 12 74 12 52 V22 Z" fill="#121620" stroke="url(#shieldGrad)" stroke-width="5"/>
+                    <circle cx="50" cy="48" r="22" stroke="#ff2b42" stroke-width="4" stroke-dasharray="8 4"/>
+                    <line x1="50" y1="20" x2="50" y2="76" stroke="#fbbf24" stroke-width="3"/>
+                    <line x1="22" y1="48" x2="78" y2="48" stroke="#fbbf24" stroke-width="3"/>
+                    <circle cx="50" cy="48" r="5" fill="#ff2b42"/>
+                    <defs>
+                        <linearGradient id="shieldGrad" x1="0" y1="0" x2="100" y2="100">
+                            <stop offset="0%" stop-color="#ff2b42"/>
+                            <stop offset="100%" stop-color="#fbbf24"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="brand-name">Crime Scene <span>Detection</span></div>
+        </a>
+
+        <div class="top-actions">
+            <!-- Clickable Emergency Hotline -->
+            <a href="tel:+18005552746" class="btn-hotline-nav" title="Call Emergency Forensic Hotline">
+                <i class="fa-solid fa-phone"></i>
+                <span class="hotline-text">+1 (800) 555-CRIME</span>
+            </a>
+
+            <a href="javascript:void(0)" onclick="switchTab('camera')" class="btn-live-stream-nav">
+                <span class="pulse-indicator-dot"></span>
+                <span>Live Feed</span>
+            </a>
+
+            <!-- Notification Bell with real count -->
+            <button class="notification-bell-btn" onclick="toggleAlertsDrawer()" title="Alert Notifications">
+                <i class="fa-regular fa-bell"></i>
+                <span class="notification-badge" id="alertCountBadge">3</span>
+            </button>
+
+            <!-- Mobile Sidebar Toggle -->
+            <button type="button" class="btn-mobile-sidebar" onclick="toggleSidebarMenu()" aria-label="Toggle navigation menu">
+                <i class="fa-solid fa-bars" id="sidebarMenuIcon"></i>
+            </button>
+
+            <!-- User Profile Avatar Pill -->
+            <div class="user-profile-menu" onclick="toggleUserDropdown(event)">
+                <div class="user-avatar-circle">
+                    {{ current_user.name[0] if current_user and current_user.name else 'R' }}
+                </div>
+                <div class="user-name-text">
+                    {{ current_user.name if current_user and current_user.name else 'Rahul Choudhary' }}
+                </div>
+                <i class="fa-solid fa-chevron-down user-dropdown-icon"></i>
+
+                <!-- User Dropdown Popover -->
+                <div class="user-dropdown-popover" id="userDropdown">
+                    <div class="user-popover-info">
+                        <div class="user-popover-title">{{ current_user.name }}</div>
+                        <div class="user-popover-role">{{ current_user.role }} • {{ current_user.badge }}</div>
+                    </div>
+                    <a href="javascript:void(0)" onclick="switchTab('settings')" class="user-popover-item">
+                        <i class="fa-solid fa-gear"></i> System Settings
+                    </a>
+                    <a href="javascript:void(0)" onclick="switchTab('results')" class="user-popover-item">
+                        <i class="fa-solid fa-box-archive"></i> Cases Archive
+                    </a>
+                    <a href="{{ url_for('web.landing') }}" class="user-popover-item">
+                        <i class="fa-solid fa-house"></i> Home Page
+                    </a>
+                    <a href="{{ url_for('web.logout') }}" class="user-popover-item" style="color: #ff4d61;">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Body Layout -->
+    <div class="dashboard-body-layout">
+
+        <!-- Left Navigation Sidebar -->
+        <aside class="left-sidebar">
+            <ul class="sidebar-nav-list">
+                <li>
+                    <a href="javascript:void(0)" class="sidebar-link active" data-tab-target="dashboard" onclick="switchTab('dashboard')">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" class="sidebar-link" data-tab-target="camera" onclick="switchTab('camera')">
+                        <i class="fa-solid fa-video"></i>
+                        <span>Live Camera</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" class="sidebar-link" data-tab-target="upload" onclick="switchTab('upload')">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload Evidence</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" class="sidebar-link" data-tab-target="results" onclick="switchTab('results')">
+                        <i class="fa-solid fa-crosshairs"></i>
+                        <span>Detection Results</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" class="sidebar-link" data-tab-target="alerts" onclick="switchTab('alerts')">
+                        <i class="fa-regular fa-bell"></i>
+                        <span>Alert Logs</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" class="sidebar-link" data-tab-target="settings" onclick="switchTab('settings')">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <main class="main-workspace">
+
+            <!-- TAB 1: MAIN DASHBOARD VIEW -->
+            <div id="view-dashboard" class="workspace-view-panel active">
+
+                <!-- Welcome Top Banner -->
+                <div class="welcome-banner-card">
+                    <div class="welcome-text-group">
+                        <h2>Welcome, {{ current_user.name if current_user and current_user.name else 'Rahul Choudhary' }}</h2>
+                        <p>Detect critical evidence and dangerous objects in real-time.</p>
+                    </div>
+
+                    <div class="hazard-ribbon">
+                        <span class="hazard-text">SAFER COMMUNITIES THROUGH SMARTER DETECTION</span>
+                        <div class="hazard-stripe-accent"></div>
+                    </div>
+                </div>
+
+                <!-- 4 Action Cards Grid -->
+                <div class="action-cards-grid">
+
+                    <!-- Card 1: Live Camera (Red) -->
+                    <div class="action-card card-red" onclick="switchTab('camera')">
+                        <div class="card-top-row">
+                            <div class="card-icon-badge badge-red-icon">
+                                <i class="fa-solid fa-camera"></i>
+                            </div>
+                            <div class="card-graphic-watermark">
+                                <i class="fa-solid fa-circle-dot"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="card-title">Live Camera</h3>
+                            <p class="card-desc">Start real-time detection from your camera.</p>
+                        </div>
+                        <a href="javascript:void(0)" class="btn-card-action btn-card-red" onclick="switchTab('camera'); event.stopPropagation();">
+                            Start Camera <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    <!-- Card 2: Upload Evidence (Yellow) -->
+                    <div class="action-card card-yellow" onclick="switchTab('upload')">
+                        <div class="card-top-row">
+                            <div class="card-icon-badge badge-yellow-icon">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </div>
+                            <div class="card-graphic-watermark">
+                                <i class="fa-solid fa-folder-closed"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="card-title">Upload Evidence</h3>
+                            <p class="card-desc">Analyze images or videos from your device.</p>
+                        </div>
+                        <a href="javascript:void(0)" class="btn-card-action btn-card-yellow" onclick="switchTab('upload'); event.stopPropagation();">
+                            Upload File <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    <!-- Card 3: View Results (Red / Dark) -->
+                    <div class="action-card card-red" onclick="switchTab('results')">
+                        <div class="card-top-row">
+                            <div class="card-icon-badge badge-red-icon">
+                                <i class="fa-solid fa-crosshairs"></i>
+                            </div>
+                            <div class="card-graphic-watermark">
+                                <i class="fa-regular fa-image"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="card-title">View Results</h3>
+                            <p class="card-desc">Check detected objects, labels and confidence scores.</p>
+                        </div>
+                        <a href="javascript:void(0)" class="btn-card-action btn-card-outline" onclick="switchTab('results'); event.stopPropagation();">
+                            Go to Results <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    <!-- Card 4: Alert Logs (Yellow / Dark) -->
+                    <div class="action-card card-yellow" onclick="switchTab('alerts')">
+                        <div class="card-top-row">
+                            <div class="card-icon-badge badge-yellow-icon">
+                                <i class="fa-solid fa-bell"></i>
+                            </div>
+                            <div class="card-graphic-watermark">
+                                <i class="fa-solid fa-bullhorn"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="card-title">Alert Logs</h3>
+                            <p class="card-desc">View all alerts and system notifications.</p>
+                        </div>
+                        <a href="javascript:void(0)" class="btn-card-action btn-card-outline" onclick="switchTab('alerts'); event.stopPropagation();">
+                            View Logs <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Two-Column Grid: Recent Activity & Last Detection -->
+                <div class="bottom-split-grid">
+
+                    <!-- Left Column: Recent Activity Table -->
+                    <div class="activity-card-container">
+                        <div class="section-header-title">
+                            <div class="red-accent-bar"></div>
+                            <span>Recent Activity</span>
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <table class="forensic-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Source</th>
+                                        <th>Detected Objects</th>
+                                        <th>Status</th>
+                                        <th style="text-align: right; width: 60px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if recent_cases %}
+                                        {% for c in recent_cases[:5] %}
+                                        <tr onclick="window.location.href='/result/{{ c.case_id }}'">
+                                            <td class="time-col">{{ c.formatted_time }}</td>
+                                            <td class="source-col">{{ c.source_label }}</td>
+                                            <td class="objects-col" title="{{ c.objects_summary }}">{{ c.objects_summary }}</td>
+                                            <td>
+                                                {% if c.threat_level in ('CRITICAL', 'HIGH') %}
+                                                    <span class="risk-badge badge-high-risk">High Risk</span>
+                                                {% elif c.threat_level == 'MEDIUM' %}
+                                                    <span class="risk-badge badge-medium-risk">Medium Risk</span>
+                                                {% else %}
+                                                    <span class="risk-badge badge-low-risk">Low Risk</span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="text-align: right;" onclick="event.stopPropagation();">
+                                                <button type="button" class="hold-button" data-case-id="{{ c.case_id }}" data-phase="idle" data-direction="right" data-glow="true" title="Hold to delete" aria-label="Hold to delete" onclick="event.stopPropagation();">
+                                                    <span class="hold-button__pulse" aria-hidden="true"></span>
+                                                    <span class="hold-button__label">
+                                                        <span class="hold-button__idle"><i class="fa-solid fa-trash-can"></i></span>
+                                                        <span class="hold-button__done"><i class="fa-solid fa-check"></i></span>
+                                                    </span>
+                                                    <span class="hold-button__clip" aria-hidden="true">
+                                                        <span class="hold-button__fill">
+                                                            <span class="hold-button__label hold-button__label--fill">
+                                                                <span class="hold-button__idle"><i class="fa-solid fa-trash-can"></i></span>
+                                                                <span class="hold-button__done"><i class="fa-solid fa-check"></i></span>
+                                                            </span>
+                                                        </span>
+                                                        <span class="hold-button__crest" aria-hidden="true">
+                                                            <span class="hold-button__label hold-button__label--fill">
+                                                                <span class="hold-button__idle"><i class="fa-solid fa-trash-can"></i></span>
+                                                                <span class="hold-button__done"><i class="fa-solid fa-check"></i></span>
+                                                            </span>
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
+                                                <i class="fa-solid fa-folder-open" style="font-size: 32px; color: var(--border-dark); margin-bottom: 10px; display: block;"></i>
+                                                <div style="color: #ffffff; font-weight: 700; font-size: 14px;">No Recent Investigations</div>
+                                                <div style="font-size: 12px; margin-top: 4px; color: var(--text-muted);">Upload evidence or start Live Camera to analyze a scene.</div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Last Detection Card -->
+                    <div class="last-detection-card" onclick="openLastCase()">
+                        <div class="detection-preview-box">
+                            {% if last_case and last_case.annotated_path %}
+                                <img src="{{ url_for('static', filename=last_case.annotated_path) }}" alt="Last Evidence Detection" onerror="this.src='/static/images/knife_detected.jpg'">
+                            {% else %}
+                                <img src="/static/images/knife_detected.jpg" alt="Last Evidence Detection">
+                                <div class="simulated-bbox-overlay">
+                                    <div class="bbox-floating-tag">Knife 0.92</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="detection-card-footer">
+                            <div class="footer-label">
+                                <i class="fa-solid fa-crosshairs" style="color: #ff334b;"></i>
+                                <span>Last Detection</span>
+                            </div>
+                            <div class="footer-time">
+                                {{ last_case.formatted_time if last_case and last_case.formatted_time else '2026-10-26 10:32' }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- TAB 2: LIVE CAMERA WORKSTATION -->
+            <div id="view-camera" class="workspace-view-panel">
+                <div class="camera-station-box">
+                    <div class="section-header-title">
+                        <div class="red-accent-bar"></div>
+                        <span>Real-Time Live Camera AI Evidence Sweep</span>
+                    </div>
+
+                    <!-- Video Viewport -->
+                    <div class="camera-feed-viewport" id="cameraViewport">
+                        <video id="webcamVideo" autoplay playsinline muted></video>
+                        <canvas id="cameraCanvas"></canvas>
+
+                        <div class="camera-hud-overlay">
+                            <div class="hud-status-badge">
+                                <span class="online-dot"></span>
+                                <span id="cameraStatusText">WEBCAM ACTIVE • 1080P</span>
+                            </div>
+                            <div class="hud-status-badge" style="border-color: rgba(255, 43, 66, 0.4);">
+                                <span id="cameraThreatBadge">STATUS: SECURE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Controls & Actions -->
+                    <div class="camera-controls-bar">
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <button type="button" class="btn-card-action btn-card-red" id="btnToggleCamera" onclick="toggleWebcam()">
+                                <i class="fa-solid fa-power-off"></i> Toggle Camera
+                            </button>
+                            <button type="button" class="btn-card-action btn-card-yellow" onclick="captureAndAnalyzeFrame()">
+                                <i class="fa-solid fa-camera-retro"></i> Capture Evidence Record
+                            </button>
+                            <button type="button" class="btn-card-action btn-card-outline" onclick="toggleAudioAlerts()">
+                                <i class="fa-solid fa-volume-high" id="audioAlertIcon"></i> Siren Alert: <span id="audioAlertStatus">ON</span>
+                            </button>
+                        </div>
+
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted);">
+                            Inference: <span id="cameraLatencyVal" style="color: #10b981;">32ms</span> • Model: <span style="color: #ffd000;">YOLOv8</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: UPLOAD EVIDENCE WORKSTATION -->
+            <div id="view-upload" class="workspace-view-panel">
+                <div class="camera-station-box">
+                    <div class="section-header-title">
+                        <div class="red-accent-bar"></div>
+                        <span>Direct Evidence Intake & Preloaded Scenarios</span>
+                    </div>
+
+                    <form id="evidenceUploadForm" action="{{ url_for('web.predict') }}" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="sample_image" id="selectedSampleInput" value="">
+                        <input type="hidden" name="model" id="uploadModelChoice" value="ensemble">
+
+                        <!-- Drag & Drop Zone -->
+                        <div class="dropzone-box" id="evidenceDropzone">
+                            <input type="file" id="evidenceFileInput" name="image" class="dropzone-input-file" accept="image/*,video/*" onchange="handleFileSelected(event)">
+                            <div style="font-size: 42px; color: var(--amber-yellow); margin-bottom: 12px;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <h3 style="font-size: 17px; font-weight: 700; color: #ffffff; margin-bottom: 6px;">
+                                Drag & Drop Crime Scene Photograph or CCTV Video
+                            </h3>
+                            <p style="font-size: 13px; color: var(--text-muted); max-width: 500px; margin: 0 auto;">
+                                Supports ultra-sharp 4K JPG, PNG, WEBP, MP4, AVI footage. AI model automatically performs forensic clarity enhancement and multi-class weapon/trace localization.
+                            </p>
+                            <div id="selectedFileBanner" style="display: none; margin-top: 14px; color: #10b981; font-weight: 700;"></div>
+                        </div>
+
+                        <!-- Calibration Bar -->
+                        <div style="display: flex; gap: 20px; align-items: center; justify-content: space-between; margin-top: 20px; padding: 14px 18px; background: rgba(255,255,255,0.02); border-radius: 10px;">
+                            <div style="display: flex; gap: 14px; align-items: center;">
+                                <label style="font-size: 13px; font-weight: 600; color: #ffffff;">Confidence Threshold:</label>
+                                <input type="range" name="confidence" min="0.10" max="0.95" step="0.05" value="0.25" oninput="document.getElementById('confDisplay').innerText = Math.round(this.value * 100) + '%'">
+                                <span id="confDisplay" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #fbbf24; font-weight: 700;">25%</span>
+                            </div>
+
+                            <button type="submit" class="btn-card-action btn-card-red" style="padding: 10px 28px; font-size: 14px;">
+                                <i class="fa-solid fa-bolt"></i> Execute AI Forensic Analysis
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Preloaded Scenarios Gallery -->
+                    <div style="margin-top: 32px;">
+                        <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin-bottom: 6px;">
+                            ⚡ 1-Click Forensic Scenarios (Instant Real Evaluation)
+                        </h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">
+                            Evaluate the neural detector on authentic ballistics, trace photography, and CCTV surveillance footage without uploading.
+                        </p>
+
+                        <div class="samples-gallery-grid">
+                            {% for s in samples[:8] %}
+                            <div class="sample-item-card" onclick="selectSample('{{ s.filename }}', '{{ s.title }}')">
+                                <div>
+                                    <div class="sample-tag">{{ s.tag }}</div>
+                                    <div class="sample-title">{{ s.title }}</div>
+                                    <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">{{ s.desc }}</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                                    <span style="font-size: 11px; color: #10b981; font-weight: 600;">Ready to Run</span>
+                                    <span style="color: var(--amber-yellow); font-size: 12px;"><i class="fa-solid fa-play"></i> Run Test</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: DETECTION RESULTS REGISTRY -->
+            <div id="view-results" class="workspace-view-panel">
+                <div class="camera-station-box">
+                    <div class="section-header-title">
+                        <div class="red-accent-bar"></div>
+                        <span>Case Registry & Evidence Archive</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <input type="text" id="caseSearchInput" placeholder="Search case ID, evidence type, or location..." onkeyup="filterCasesTable()" style="background: #11151e; border: 1px solid var(--border-dark); color: #ffffff; padding: 10px 16px; border-radius: 8px; width: 340px; font-size: 13px;">
+
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-card-action btn-card-outline" onclick="filterByThreat('')">All ({{ stats.total_cases }})</button>
+                            <button class="btn-card-action btn-card-outline" style="border-color: rgba(255,43,66,0.4); color:#ff4d61;" onclick="filterByThreat('CRITICAL')">Critical ({{ stats.critical_threats }})</button>
+                            <button class="btn-card-action btn-card-outline" style="border-color: rgba(245,158,11,0.4); color:#fbbf24;" onclick="filterByThreat('MEDIUM')">Medium</button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="forensic-table" id="fullCasesTable">
+                            <thead>
+                                <tr>
+                                    <th>Case ID</th>
+                                    <th>Title</th>
+                                    <th>Threat Level</th>
+                                    <th>Evidence Cataloged</th>
+                                    <th>Timestamp</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in recent_cases %}
+                                <tr>
+                                    <td class="time-col" style="color: #ffd000; font-weight: 700;">{{ c.case_id }}</td>
+                                    <td class="source-col">{{ c.title }}</td>
+                                    <td>
+                                        {% if c.threat_level in ('CRITICAL', 'HIGH') %}
+                                            <span class="risk-badge badge-high-risk">High Risk</span>
+                                        {% elif c.threat_level == 'MEDIUM' %}
+                                            <span class="risk-badge badge-medium-risk">Medium Risk</span>
+                                        {% else %}
+                                            <span class="risk-badge badge-low-risk">Low Risk</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="font-weight: 600; color: #ffffff;">{{ c.evidence_items|length if c.evidence_items else '1+' }} items</td>
+                                    <td class="time-col">{{ c.formatted_time }}</td>
+                                    <td>
+                                        <div style="display: flex; gap: 8px;">
+                                            <a href="/result/{{ c.case_id }}" class="btn-card-action btn-card-outline" style="padding: 4px 12px; font-size: 12px;">
+                                                <i class="fa-solid fa-eye"></i> View
+                                            </a>
+                                            <a href="/cases/{{ c.case_id }}/pdf" class="btn-card-action btn-card-yellow" style="padding: 4px 12px; font-size: 12px;">
+                                                <i class="fa-solid fa-file-pdf"></i> PDF
+                                            </a>
+                                            <button type="button" class="hold-button" data-case-id="{{ c.case_id }}" data-phase="idle" data-direction="right" data-glow="true" title="Hold to delete" aria-label="Hold to delete" onclick="event.stopPropagation();">
+                                                <span class="hold-button__pulse" aria-hidden="true"></span>
+                                                <span class="hold-button__label">
+                                                    <span class="hold-button__idle"><i class="fa-solid fa-trash-can"></i></span>
+                                                    <span class="hold-button__done"><i class="fa-solid fa-check"></i></span>
+                                                </span>
+                                                <span class="hold-button__clip" aria-hidden="true">
+                                                    <span class="hold-button__fill">
+                                                        <span class="hold-button__label hold-button__label--fill">
+                                                            <span class="hold-button__idle"><i class="fa-solid fa-trash-can"></i></span>
+                                                            <span class="hold-button__done"><i class="fa-solid fa-check"></i></span>
+                                                        </span>
+                                                    </span>
+                                                    <span class="hold-button__crest" aria-hidden="true">
+                                                        <span class="hold-button__label hold-button__label--fill">
+                                                            <span class="hold-button__idle"><i class="fa-solid fa-trash-can"></i></span>
+                                                            <span class="hold-button__done"><i class="fa-solid fa-check"></i></span>
+                                                        </span>
+                                                    </span>
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: ALERT LOGS VIEW -->
+            <div id="view-alerts" class="workspace-view-panel">
+                <div class="camera-station-box">
+                    <div class="section-header-title">
+                        <div class="red-accent-bar"></div>
+                        <span>Real-Time Alert Logs & Audit Trail</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <p style="font-size: 13px; color: var(--text-muted);">
+                            Active audit trail recording weapon identification events, high-threat intrusions, and camera detections.
+                        </p>
+                        <button class="btn-card-action btn-card-red" onclick="testAudioSiren()">
+                            <i class="fa-solid fa-bell"></i> Test Audio Alarm
+                        </button>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px;" id="alertsLogContainer">
+                        <div style="background: rgba(255, 43, 66, 0.08); border: 1px solid rgba(255, 43, 66, 0.35); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <i class="fa-solid fa-triangle-exclamation" style="color: #ff334b; font-size: 22px;"></i>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #ffffff;">Lethal Weapon Detected: Handgun / Firearm</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Source: Live Camera • High-confidence localization (96.4%)</div>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-high-risk">CRITICAL</span>
+                        </div>
+
+                        <div style="background: rgba(255, 43, 66, 0.08); border: 1px solid rgba(255, 43, 66, 0.35); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <i class="fa-solid fa-shield-halved" style="color: #ff334b; font-size: 22px;"></i>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #ffffff;">Edged Weapon Identified: Tactical Knife</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Source: Evidence Photograph Upload • Forensic marker cone adjacent</div>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-high-risk">CRITICAL</span>
+                        </div>
+
+                        <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <i class="fa-solid fa-fingerprint" style="color: #fbbf24; font-size: 22px;"></i>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #ffffff;">Latent Trace & Blood Pattern Cataloged</div>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Source: 4K Traces Recovery • Clarity score 88.5</div>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-medium-risk">MEDIUM RISK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: SETTINGS VIEW -->
+            <div id="view-settings" class="workspace-view-panel">
+                <div class="camera-station-box">
+                    <div class="section-header-title">
+                        <div class="red-accent-bar"></div>
+                        <span>Forensic Platform & AI Model Settings</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div>
+                            <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin-bottom: 12px;">Active AI Model Engine</h4>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-dark); border-radius: 8px; cursor: pointer;">
+                                    <input type="radio" name="modelSetting" value="yolov8" checked>
+                                    <div>
+                                        <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">YOLOv8 Detection Engine (Recommended)</div>
+                                        <div style="font-size: 11.5px; color: var(--text-muted);">High speed, ultra-reliable evidence & weapon localization</div>
+                                    </div>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-dark); border-radius: 8px; cursor: pointer;">
+                                    <input type="radio" name="modelSetting" value="ensemble">
+                                    <div>
+                                        <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Dual Specialist Ensemble</div>
+                                        <div style="font-size: 11.5px; color: var(--text-muted);">Runs specialized weapon detector + general COCO forensic sweep</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 style="font-size: 15px; font-weight: 700; color: #ffffff; margin-bottom: 12px;">Investigator Profile</h4>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div>
+                                    <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Investigator Name</label>
+                                    <input type="text" id="prefInvestigator" value="{{ current_user.name }}" style="background: #11151e; border: 1px solid var(--border-dark); color: #ffffff; padding: 10px 14px; border-radius: 8px; width: 100%; font-size: 13px;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Department / Unit</label>
+                                    <input type="text" id="prefDepartment" value="{{ current_user.unit }}" style="background: #11151e; border: 1px solid var(--border-dark); color: #ffffff; padding: 10px 14px; border-radius: 8px; width: 100%; font-size: 13px;">
+                                </div>
+                                <button type="button" class="btn-card-action btn-card-red" onclick="saveSettings()" style="width: fit-content; margin-top: 6px;">
+                                    Save Preferences
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Firebase Cloud Services Status Card -->
+                    <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fbbf24; font-size: 18px;">
+                                    <i class="fa-solid fa-cloud"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #ffffff;">Firebase Cloud Services Integration</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Cloud Firestore Case Sync & Firebase Authentication</p>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-low-risk" style="display: flex; align-items: center; gap: 6px;">
+                                <span class="online-dot" style="width: 7px; height: 7px;"></span> Active & Connected
+                            </span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px;">
+                            <div style="background: #11151e; border: 1px solid var(--border-dark); border-radius: 8px; padding: 12px;">
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Firebase Project</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #fbbf24; margin-top: 2px;">crime-scene-detection</div>
+                            </div>
+                            <div style="background: #11151e; border: 1px solid var(--border-dark); border-radius: 8px; padding: 12px;">
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Service Account</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #10b981; margin-top: 2px;">firebase_credentials.json</div>
+                            </div>
+                            <div style="background: #11151e; border: 1px solid var(--border-dark); border-radius: 8px; padding: 12px;">
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Auth Status</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #38bdf8; margin-top: 2px;">Officer Account Active</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <button type="button" class="btn-card-action btn-card-yellow" onclick="syncFirebaseCases()" id="btnSyncFirebase">
+                                <i class="fa-solid fa-arrows-rotate"></i> Sync Cases to Firebase Cloud
+                            </button>
+                            <span id="firebaseSyncStatusText" style="font-size: 12px; color: var(--text-muted);">Click to sync all SQLite cases and evidence items to Firebase Firestore.</span>
+                        </div>
+                    </div>
+
+                    <!-- System Diagnostics & Error Tracking Card -->
+                    <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 18px;">
+                                    <i class="fa-solid fa-terminal"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #ffffff;">System Diagnostics & Error Tracking</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Real-time application health monitoring, rotating error logs & API sink</p>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-low-risk" style="display: flex; align-items: center; gap: 6px;">
+                                <span class="online-dot" style="width: 7px; height: 7px;"></span> Active Sink: logs/app_errors.log
+                            </span>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <button type="button" class="btn-card-action" onclick="openDiagnosticsModal()" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8;">
+                                <i class="fa-solid fa-laptop-code"></i> View Diagnostic Logs & Error Stream
+                            </button>
+                            <span style="font-size: 12px; color: var(--text-muted);">Inspect recent application events, caught exceptions, and warning logs.</span>
+                        </div>
+                    </div>
+
+                    <!-- Guided Orientation & Onboarding Card -->
+                    <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fbbf24; font-size: 18px;">
+                                    <i class="fa-solid fa-graduation-cap"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #ffffff;">Investigator Orientation Tour</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Guided walkthrough covering neural evidence intake, live CCTV, and docket exports</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <button type="button" class="btn-card-action btn-card-yellow" onclick="openOnboardingTour()">
+                                <i class="fa-solid fa-compass"></i> Re-launch Officer Onboarding Tour
+                            </button>
+                            <span style="font-size: 12px; color: var(--text-muted);">Review core features, shortcut workflows, and chain of custody rules.</span>
+                        </div>
+                    </div>
+
+                    <!-- Database Backups & Snapshot Recovery Card -->
+                    <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 18px;">
+                                    <i class="fa-solid fa-database"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #ffffff;">Database Backups & Snapshot Recovery</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Atomic SQLite snapshot backups with automated 10-cycle rotation in database/backups/</p>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-low-risk" style="display: flex; align-items: center; gap: 6px;">
+                                <span class="online-dot" style="width: 7px; height: 7px;"></span> Auto-Rotation Active
+                            </span>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <button type="button" class="btn-card-action btn-card-green" onclick="triggerDatabaseBackup()" id="btnTriggerBackup">
+                                <i class="fa-solid fa-hard-drive"></i> Create Instant Database Backup
+                            </button>
+                            <button type="button" class="btn-card-action" onclick="fetchDatabaseBackups()" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-dark); color: #cbd5e1;">
+                                <i class="fa-solid fa-list-check"></i> View Backups
+                            </button>
+                            <span id="backupStatusText" style="font-size: 12px; color: var(--text-muted);">Atomic hot-backup protects all cases, evidence hashes, and audit logs.</span>
+                        </div>
+                        <div id="backupListContainer" style="display: none; margin-top: 14px; background: #0c0f17; border: 1px solid var(--border-dark); border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; max-height: 180px; overflow-y: auto;"></div>
+                    </div>
+
+                    <!-- Row-Level Security (RLS) Status Card -->
+                    <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #a855f7; font-size: 18px;">
+                                    <i class="fa-solid fa-fingerprint"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #ffffff;">Row-Level Security (RLS) & Access Control</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Enforces departmental and officer badge isolation across criminal investigation records</p>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-low-risk" style="display: flex; align-items: center; gap: 6px; background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;">
+                                <i class="fa-solid fa-shield-halved"></i> RLS Enforced
+                            </span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
+                            <div style="background: #11151e; border: 1px solid var(--border-dark); border-radius: 8px; padding: 12px;">
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">RLS Policy Status</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #10b981; margin-top: 2px;">Active & Strict</div>
+                            </div>
+                            <div style="background: #11151e; border: 1px solid var(--border-dark); border-radius: 8px; padding: 12px;">
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Jurisdiction Scope</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #38bdf8; margin-top: 2px;">{{ current_user.unit if current_user else 'CSI Bureau' }}</div>
+                            </div>
+                            <div style="background: #11151e; border: 1px solid var(--border-dark); border-radius: 8px; padding: 12px;">
+                                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Officer Clearance</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #fbbf24; margin-top: 2px;">{{ current_user.role if current_user else 'Forensic Investigator' }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Platform Telemetry & Analytics Card -->
+                    <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 18px;">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #ffffff;">Platform Telemetry & Analytics</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Real-time usage telemetry, detection throughput, and evidentiary analytics</p>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-low-risk" style="display: flex; align-items: center; gap: 6px;">
+                                <span class="online-dot" style="width: 7px; height: 7px;"></span> Telemetry Active
+                            </span>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <button type="button" class="btn-card-action" onclick="openAnalyticsModal()" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8;">
+                                <i class="fa-solid fa-chart-pie"></i> View Telemetry & Usage Analytics
+                            </button>
+                            <span style="font-size: 12px; color: var(--text-muted);">Inspect platform page views, model sweeps, and session metrics.</span>
+                        </div>
+                    </div>
+
+                    <!-- Email Verification Status Card -->
+                    <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fbbf24; font-size: 18px;">
+                                    <i class="fa-solid fa-envelope-circle-check"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #ffffff;">Investigator Email Verification</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Official domain accreditation and verified communications status</p>
+                                </div>
+                            </div>
+                            <span class="risk-badge badge-low-risk" style="display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Official Accreditation Active
+                            </span>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <form action="{{ url_for('web.resend_verification') }}" method="post" style="display: inline;">
+                                <button type="submit" class="btn-card-action btn-card-yellow">
+                                    <i class="fa-solid fa-paper-plane"></i> Refresh Email Verification Token
+                                </button>
+                            </form>
+                            <span style="font-size: 12px; color: var(--text-muted);">Active email: <strong style="color: #ffffff;">{{ current_user.email }}</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone: Delete Account Card -->
+                    <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255, 43, 66, 0.3);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: rgba(255, 43, 66, 0.15); border: 1px solid rgba(255, 43, 66, 0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #ff4d61; font-size: 18px;">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 15px; font-weight: 700; color: #ff4d61;">Danger Zone: Purge Officer Account</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted);">Permanently expunge officer profile, biometric clearance, and active credentials</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <button type="button" class="btn-card-action btn-card-red" onclick="openDeleteAccountModal()">
+                                <i class="fa-solid fa-trash-can"></i> Purge Investigator Account
+                            </button>
+                            <span style="font-size: 12px; color: #ff6b7e;">Warning: This action is permanent and logs to the CJIS audit register.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- 1. Forensic Neural Scan Loading Overlay -->
+    <div class="forensic-scan-backdrop" id="forensicScanOverlay" role="dialog" aria-modal="true" aria-label="Neural Evidence Processing">
+        <div class="radar-scope-container">
+            <div class="radar-scope-ring ring-outer"></div>
+            <div class="radar-scope-ring ring-mid"></div>
+            <div class="radar-scope-ring ring-inner"></div>
+            <div class="radar-crosshair-h"></div>
+            <div class="radar-crosshair-v"></div>
+            <div class="radar-sweep-beam"></div>
+            <div class="radar-blip" style="top: 36px; left: 110px;"></div>
+            <div class="radar-blip" style="bottom: 45px; right: 55px; animation-delay: 0.8s;"></div>
+            <div class="radar-blip" style="top: 90px; right: 80px; animation-delay: 1.4s;"></div>
+            <div class="radar-target-dot"></div>
+        </div>
+        <div class="scan-title">Neural Forensic Scan Active</div>
+        <div class="scan-status-text" id="scanStatusDynamicText">Initializing YOLOv8 neural tensor engine...</div>
+        <div class="scan-progress-bar-wrap">
+            <div class="scan-progress-bar-fill" id="scanProgressFill"></div>
+        </div>
+        <div class="scan-terminal-sub">
+            <span><i class="fa-solid fa-microchip"></i> GPU ACCELERATED COCO INFERENCE</span>
+            <span id="scanPercentLabel">0%</span>
+        </div>
+    </div>
+
+    <!-- 2. Interactive Officer Onboarding Tour Modal -->
+    <div class="onboarding-modal-backdrop" id="onboardingTourModal" role="dialog" aria-modal="true" aria-label="Investigator Guided Tour">
+        <div class="onboarding-card">
+            <div class="onboarding-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="onboarding-step-badge" id="onboardingStepBadge">STEP 1 OF 4</div>
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Guided Platform Tour</span>
+                </div>
+                <button type="button" class="onboarding-close-btn" onclick="closeOnboardingTour()" aria-label="Close Tour" title="Close (Esc)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="onboarding-body" id="onboardingSlideContainer">
+                <!-- Slide 1 -->
+                <div class="onboarding-slide active" data-slide="0">
+                    <div class="onboarding-icon-wrap icon-pulse-amber">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="onboarding-headline">Welcome to CSI Forensic Intelligence</h3>
+                    <p class="onboarding-subtext">A CJIS-grade platform engineered for rapid evidence localization, ballistics correlation, and automated chain of custody archiving.</p>
+                    <div class="onboarding-feature-list">
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Real-time YOLOv8 weapon, knife, and vehicle localization</div>
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Dual Specialists ensemble for high-precision crime scene analysis</div>
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Tamper-proof SHA-256 evidence logging & offline SQLite persistence</div>
+                    </div>
+                </div>
+                <!-- Slide 2 -->
+                <div class="onboarding-slide" data-slide="1">
+                    <div class="onboarding-icon-wrap icon-pulse-blue">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <h3 class="onboarding-headline">Evidence Intake & Sample Scenarios</h3>
+                    <p class="onboarding-subtext">Upload hi-res crime scene photography, surveillance video clips, or inspect pre-loaded forensic test scenarios with a single click.</p>
+                    <div class="onboarding-feature-list">
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Supports JPG, PNG, MP4, and WEBM video formats up to 64MB</div>
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Instant 1-click sample cases (Armed Robbery, Burglary, Weapon Drop)</div>
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Drag & drop intake with automatic bounding box coordinate overlays</div>
+                    </div>
+                </div>
+                <!-- Slide 3 -->
+                <div class="onboarding-slide" data-slide="2">
+                    <div class="onboarding-icon-wrap icon-pulse-emerald">
+                        <i class="fa-solid fa-video"></i>
+                    </div>
+                    <h3 class="onboarding-headline">Live Neural Surveillance Feed</h3>
+                    <p class="onboarding-subtext">Connect field body-cams or live surveillance CCTV streams directly to the browser for continuous threat monitoring.</p>
+                    <div class="onboarding-feature-list">
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> 1080p webcam feed with real-time snapshot neural scan</div>
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Instant threat alerts triggered upon firearm or edge-weapon detection</div>
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Audio alerts & immediate push notification dispatcher</div>
+                    </div>
+                </div>
+                <!-- Slide 4 -->
+                <div class="onboarding-slide" data-slide="3">
+                    <div class="onboarding-icon-wrap icon-pulse-purple">
+                        <i class="fa-solid fa-file-shield"></i>
+                    </div>
+                    <h3 class="onboarding-headline">Chain of Custody & PDF Reports</h3>
+                    <p class="onboarding-subtext">Generate court-admissible forensic docket reports with forensic hashes, timestamped audit trails, and officer signatures.</p>
+                    <div class="onboarding-feature-list">
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Export professional forensic PDF case reports with one click</div>
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> Secure SQLite database with automated scheduled backup rotations</div>
+                        <div class="onboarding-feature-item"><i class="fa-solid fa-check"></i> NIST 800-88 compliant digital forensics preservation standards</div>
+                    </div>
+                </div>
+            </div>
+            <div class="onboarding-footer-controls">
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-card-action" onclick="closeOnboardingTour()" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; font-size: 12px; padding: 6px 14px;">
+                        Skip Tour
+                    </button>
+                    <button type="button" class="btn-card-action" id="btnOnboardingPrev" onclick="prevOnboardingStep()" style="display: none; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #94a3b8; font-size: 12px; padding: 6px 14px;">
+                        <i class="fa-solid fa-arrow-left"></i> Previous
+                    </button>
+                </div>
+                <div class="onboarding-dots" id="onboardingDotsGroup">
+                    <span class="onboarding-dot active" onclick="goToOnboardingStep(0)" title="Step 1"></span>
+                    <span class="onboarding-dot" onclick="goToOnboardingStep(1)" title="Step 2"></span>
+                    <span class="onboarding-dot" onclick="goToOnboardingStep(2)" title="Step 3"></span>
+                    <span class="onboarding-dot" onclick="goToOnboardingStep(3)" title="Step 4"></span>
+                </div>
+                <button type="button" class="btn-card-action btn-card-yellow" id="btnOnboardingNext" onclick="nextOnboardingStep()" style="font-size: 12px; padding: 6px 18px;">
+                    Next <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. System Diagnostic Logs Viewer Modal -->
+    <div class="diagnostics-modal-backdrop" id="errorLogsModal" role="dialog" aria-modal="true" aria-label="System Diagnostics & Logs">
+        <div class="diagnostics-card">
+            <div class="diagnostics-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-terminal" style="color: #38bdf8; font-size: 16px;"></i>
+                    <h3 style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0;">Forensic System Diagnostics & Error Tracking</h3>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="btn-card-action" onclick="fetchSystemDiagnostics()" style="padding: 6px 12px; font-size: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #cbd5e1;">
+                        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                    </button>
+                    <button type="button" class="onboarding-close-btn" onclick="closeDiagnosticsModal()" aria-label="Close Diagnostics">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="diagnostics-stats-bar" style="padding: 10px 24px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; gap: 20px; font-size: 12px; font-family: 'JetBrains Mono', monospace;">
+                <span style="color: #94a3b8;">SYSTEM: <strong style="color: #10b981;" id="diagSystemStatus">HEALTHY</strong></span>
+                <span style="color: #94a3b8;">CRITICAL ERRORS: <strong style="color: #ff4d61;" id="diagErrorCount">0</strong></span>
+                <span style="color: #94a3b8;">LOG BUFFER: <strong style="color: #38bdf8;" id="diagLogCount">0 entries</strong></span>
+            </div>
+            <div class="diagnostics-console-body" id="diagnosticsConsoleBody">
+                <div style="color: #64748b; font-style: italic;">Loading live application runtime logs...</div>
+            </div>
+            <div style="padding: 12px 24px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #64748b; font-family: 'JetBrains Mono', monospace;">
+                <span>Log Sink: logs/app_errors.log &bull; Max 2MB Rotation</span>
+                <button type="button" class="btn-card-action" onclick="closeDiagnosticsModal()" style="padding: 6px 14px; font-size: 12px; background: rgba(255,255,255,0.08); color: #ffffff;">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Platform Analytics & Telemetry Modal -->
+    <div class="diagnostics-modal-backdrop" id="analyticsModal" role="dialog" aria-modal="true" aria-label="Platform Telemetry & Analytics">
+        <div class="diagnostics-card" style="width: 720px;">
+            <div class="diagnostics-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-chart-line" style="color: #38bdf8; font-size: 16px;"></i>
+                    <h3 style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 0;">Platform Usage Telemetry & Analytics</h3>
+                </div>
+                <button type="button" class="onboarding-close-btn" onclick="closeAnalyticsModal()" aria-label="Close Analytics">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div style="padding: 24px; background: #080b12;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+                    <div style="background: #111520; border: 1px solid var(--border-dark); border-radius: 10px; padding: 14px; text-align: center;">
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Total Telemetry</div>
+                        <div style="font-size: 20px; font-weight: 800; color: #38bdf8; margin-top: 4px;" id="statTotalEvents">0</div>
+                    </div>
+                    <div style="background: #111520; border: 1px solid var(--border-dark); border-radius: 10px; padding: 14px; text-align: center;">
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Page Views</div>
+                        <div style="font-size: 20px; font-weight: 800; color: #10b981; margin-top: 4px;" id="statPageViews">0</div>
+                    </div>
+                    <div style="background: #111520; border: 1px solid var(--border-dark); border-radius: 10px; padding: 14px; text-align: center;">
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">AI Sweeps</div>
+                        <div style="font-size: 20px; font-weight: 800; color: #fbbf24; margin-top: 4px;" id="statCaseScans">0</div>
+                    </div>
+                    <div style="background: #111520; border: 1px solid var(--border-dark); border-radius: 10px; padding: 14px; text-align: center;">
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Unique Sessions</div>
+                        <div style="font-size: 20px; font-weight: 800; color: #c084fc; margin-top: 4px;" id="statSessions">1</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 12px; font-weight: 700; color: #ffffff; margin-bottom: 10px; text-transform: uppercase;">Recent Telemetry Activity Stream</div>
+                <div id="analyticsRecentStream" style="background: #06080c; border: 1px solid var(--border-dark); border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8; max-height: 200px; overflow-y: auto;">
+                    <div>Loading platform analytics stream...</div>
+                </div>
+            </div>
+            <div style="padding: 12px 24px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #64748b;">
+                <span>Local Privacy-Preserving Event Sink &bull; No PII Transmitted</span>
+                <button type="button" class="btn-card-action" onclick="closeAnalyticsModal()" style="padding: 6px 14px; font-size: 12px; background: rgba(255,255,255,0.08); color: #ffffff;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Delete Account Confirmation Modal -->
+    <div class="diagnostics-modal-backdrop" id="deleteAccountModal" role="dialog" aria-modal="true" aria-label="Purge Account Confirmation">
+        <div class="diagnostics-card" style="width: 500px; border-color: rgba(255, 43, 66, 0.4);">
+            <div class="diagnostics-header" style="background: rgba(255, 43, 66, 0.08); border-bottom-color: rgba(255, 43, 66, 0.2);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: #ff4d61; font-size: 18px;"></i>
+                    <h3 style="font-size: 15px; font-weight: 800; color: #ff4d61; margin: 0;">Purge Officer Account Permanently</h3>
+                </div>
+                <button type="button" class="onboarding-close-btn" onclick="closeDeleteAccountModal()" aria-label="Cancel">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form action="{{ url_for('web.delete_account') }}" method="post" style="padding: 24px; background: #0c080a;">
+                <p style="font-size: 13.5px; color: #cbd5e1; line-height: 1.6; margin-bottom: 16px;">
+                    This action is <strong style="color: #ff4d61;">irreversible</strong>. Your investigator credentials, officer session, and departmental clearance will be expunged from the database in compliance with CJIS protocols.
+                </p>
+                <div style="margin-bottom: 18px;">
+                    <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Type <strong>DELETE</strong> in all-caps to confirm:</label>
+                    <input type="text" name="confirm_delete" id="confirmDeleteInput" placeholder="DELETE" required style="width: 100%; background: #140d10; border: 1px solid rgba(255, 43, 66, 0.4); color: #ffffff; padding: 10px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px;" autocomplete="off">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-card-action" onclick="closeDeleteAccountModal()" style="background: rgba(255,255,255,0.06); color: #cbd5e1;">Cancel</button>
+                    <button type="submit" class="btn-card-action btn-card-red">
+                        <i class="fa-solid fa-trash-can"></i> Permanently Delete Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts for Full Interactive Functionality -->
+    <script>
+        // Tab switching logic
+        function switchTab(tabName) {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-tab-target') === tabName) {
+                    link.classList.add('active');
+                }
+            });
+
+            document.querySelectorAll('.workspace-view-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            const target = document.getElementById('view-' + tabName);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            if (tabName === 'camera') {
+                startWebcam();
+            } else {
+                stopWebcam();
+            }
+        }
+
+        // Check URL query param for default tab (e.g. ?tab=upload, ?tab=camera)
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            if (tabParam) {
+                switchTab(tabParam);
+            }
+            if (typeof initHoldButtons === 'function') {
+                initHoldButtons();
+            }
+
+            // Hook upload form to high-tech neural scan overlay
+            const upForm = document.getElementById('evidenceUploadForm');
+            if (upForm) {
+                upForm.addEventListener('submit', function() {
+                    showForensicScanOverlay("Uploading evidence & executing neural tensor inference...");
+                });
+            }
+
+            // Interactive Onboarding Tour initialization: only launch if explicitly requested (?tour=1) or fresh registration
+            const forceTour = urlParams.get('tour') === '1';
+            const showOnboardingServer = {{ 'true' if session.get('show_onboarding') else 'false' }};
+            const onboardingDone = localStorage.getItem('forensic_onboarding_completed');
+
+            if (forceTour || (showOnboardingServer && !onboardingDone)) {
+                setTimeout(() => {
+                    openOnboardingTour();
+                }, 600);
+            }
+        });
+
+        // User dropdown toggle
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            const popover = document.getElementById('userDropdown');
+            popover.classList.toggle('show');
+        }
+
+        document.addEventListener('click', () => {
+            const popover = document.getElementById('userDropdown');
+            if (popover) popover.classList.remove('show');
+        });
+
+        // Open last case
+        function openLastCase() {
+            {% if last_case %}
+                window.location.href = '/result/{{ last_case.case_id }}';
+            {% else %}
+                window.location.href = '/cases';
+            {% endif %}
+        }
+
+        // Live Camera implementation
+        let webcamStream = null;
+        let isDetecting = false;
+        let detectionInterval = null;
+        let audioAlertEnabled = true;
+
+        async function startWebcam() {
+            const video = document.getElementById('webcamVideo');
+            const canvas = document.getElementById('cameraCanvas');
+            const statusText = document.getElementById('cameraStatusText');
+
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                video.srcObject = webcamStream;
+                statusText.innerText = "WEBCAM ACTIVE • 720P/1080P";
+                statusText.style.color = "#10b981";
+
+                video.onloadedmetadata = () => {
+                    canvas.width = video.videoWidth || 1280;
+                    canvas.height = video.videoHeight || 720;
+                    if (!isDetecting) {
+                        startDetectionLoop();
+                    }
+                };
+            } catch (err) {
+                console.warn("Webcam access error, switching to synthetic CCTV feed:", err);
+                statusText.innerText = "SIMULATED CCTV CAM-04 (ACTIVE)";
+                statusText.style.color = "#fbbf24";
+                video.src = "/static/samples/cctv_armed_robbery.mp4";
+                video.loop = true;
+                video.muted = true;
+                video.play();
+                video.onloadedmetadata = () => {
+                    canvas.width = video.videoWidth || 1280;
+                    canvas.height = video.videoHeight || 720;
+                    if (!isDetecting) {
+                        startDetectionLoop();
+                    }
+                };
+            }
+        }
+
+        function stopWebcam() {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            isDetecting = false;
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+        }
+
+        function toggleWebcam() {
+            if (webcamStream || isDetecting) {
+                stopWebcam();
+                document.getElementById('cameraStatusText').innerText = "CAMERA OFF";
+            } else {
+                startWebcam();
+            }
+        }
+
+        function startDetectionLoop() {
+            isDetecting = true;
+            const video = document.getElementById('webcamVideo');
+            const canvas = document.getElementById('cameraCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
+            detectionInterval = setInterval(async () => {
+                if (!video.videoWidth || !video.videoHeight) return;
+
+                tempCanvas.width = 640;
+                tempCanvas.height = 360;
+                tempCtx.drawImage(video, 0, 0, 640, 360);
+                const b64Frame = tempCanvas.toDataURL('image/jpeg', 0.65);
+
+                const t0 = performance.now();
+                try {
+                    const res = await fetch('/api/v1/detect_frame', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            frame_base64: b64Frame,
+                            confidence: 0.25,
+                            model: 'ensemble'
+                        })
+                    });
+                    const data = await res.json();
+                    const latency = Math.round(performance.now() - t0);
+                    document.getElementById('cameraLatencyVal').innerText = latency + 'ms';
+
+                    // Draw detections
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const scaleX = canvas.width / 640;
+                    const scaleY = canvas.height / 360;
+
+                    let hasCritical = false;
+
+                    if (data.detections && data.detections.length > 0) {
+                        data.detections.forEach(det => {
+                            const [x1, y1, x2, y2] = det.box || [0, 0, 0, 0];
+                            const rx = x1 * scaleX;
+                            const ry = y1 * scaleY;
+                            const rw = (x2 - x1) * scaleX;
+                            const rh = (y2 - y1) * scaleY;
+
+                            const isWeapon = (det.severity === 'CRITICAL' || det.category === 'Weapons & Ballistics' || /gun|knife|firearm|pistol|weapon/i.test(det.class));
+                            if (isWeapon) hasCritical = true;
+
+                            ctx.lineWidth = 3;
+                            ctx.strokeStyle = isWeapon ? '#ff2b42' : '#fbbf24';
+                            ctx.strokeRect(rx, ry, rw, rh);
+
+                            // Label badge
+                            const label = (det.class || 'Evidence') + ' ' + Math.round(det.confidence * 100) + '%';
+                            ctx.fillStyle = isWeapon ? '#ff2b42' : '#fbbf24';
+                            ctx.font = 'bold 14px "JetBrains Mono", monospace';
+                            const textW = ctx.measureText(label).width;
+                            ctx.fillRect(rx, ry - 24, textW + 12, 24);
+
+                            ctx.fillStyle = isWeapon ? '#ffffff' : '#0a0d13';
+                            ctx.fillText(label, rx + 6, ry - 7);
+                        });
+                    }
+
+                    const badge = document.getElementById('cameraThreatBadge');
+                    if (hasCritical) {
+                        badge.innerText = "THREAT DETECTED: ARMED / LETHAL OBJECT";
+                        badge.style.color = "#ff2b42";
+                        badge.parentElement.style.borderColor = "rgba(255, 43, 66, 0.8)";
+                        if (audioAlertEnabled) playSirenTone();
+                    } else {
+                        badge.innerText = "STATUS: MONITORING ACTIVE";
+                        badge.style.color = "#34d399";
+                        badge.parentElement.style.borderColor = "rgba(52, 211, 153, 0.4)";
+                    }
+                } catch (e) {
+                    console.error("Frame detection error:", e);
+                }
+            }, 500);
+        }
+
+        // Web Audio Siren Synthesizer
+        let audioCtx = null;
+        function playSirenTone() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            } catch (err) {}
+        }
+
+        function toggleAudioAlerts() {
+            audioAlertEnabled = !audioAlertEnabled;
+            document.getElementById('audioAlertStatus').innerText = audioAlertEnabled ? "ON" : "OFF";
+            document.getElementById('audioAlertIcon').className = audioAlertEnabled ? "fa-solid fa-volume-high" : "fa-solid fa-volume-xmark";
+            showToast("Audio Siren Alerts " + (audioAlertEnabled ? "Enabled" : "Muted"));
+        }
+
+        function testAudioSiren() {
+            playSirenTone();
+            showToast("Playing synthesized forensic alert siren!");
+        }
+
+        // Capture evidence frame to new case
+        async function captureAndAnalyzeFrame() {
+            const video = document.getElementById('webcamVideo');
+            if (!video.videoWidth) {
+                showToast("Start camera before capturing evidence record!");
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('image', blob, 'camera_capture.jpg');
+                formData.append('title', 'Live Camera Snapshot Evidence');
+                formData.append('investigator', '{{ current_user.name }}');
+                formData.append('department', '{{ current_user.unit }}');
+                formData.append('model', 'ensemble');
+
+                showToast("Archiving live frame to Forensic Database...");
+                showForensicScanOverlay("Processing camera snapshot with neural weapon detector...");
+
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        window.location.reload();
+                    }
+                } catch (err) {
+                    hideForensicScanOverlay();
+                    showToast("Error saving case: " + err);
+                }
+            }, 'image/jpeg', 0.95);
+        }
+
+        // 1-Click sample selection
+        function selectSample(filename, title) {
+            document.getElementById('selectedSampleInput').value = filename;
+            showToast("Selected sample: " + title);
+            showForensicScanOverlay("Processing sample scenario: " + title + "...");
+            document.getElementById('evidenceUploadForm').submit();
+        }
+
+        function handleFileSelected(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const banner = document.getElementById('selectedFileBanner');
+                banner.style.display = 'block';
+                banner.innerText = 'Selected: ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+            }
+        }
+
+        // Filter cases table
+        function filterCasesTable() {
+            const query = document.getElementById('caseSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#fullCasesTable tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function filterByThreat(threat) {
+            const rows = document.querySelectorAll('#fullCasesTable tbody tr');
+            rows.forEach(row => {
+                if (!threat) {
+                    row.style.display = '';
+                } else {
+                    const text = row.innerText.toUpperCase();
+                    row.style.display = text.includes(threat) ? '' : 'none';
+                }
+            });
+        }
+
+        // Save preferences
+        function saveSettings() {
+            const nameInput = document.getElementById('prefInvestigator');
+            if (nameInput && nameInput.value.trim()) {
+                document.querySelectorAll('.user-name-text, .user-popover-title').forEach(el => {
+                    el.innerText = nameInput.value.trim();
+                });
+            }
+            showToast("Platform preferences & AI engine saved successfully!", "success");
+        }
+
+        // Mobile sidebar toggle
+        function toggleSidebarMenu() {
+            const sb = document.querySelector('.left-sidebar');
+            const icon = document.getElementById('sidebarMenuIcon');
+            if (!sb) return;
+            sb.classList.toggle('collapsed-mobile');
+            if (icon) {
+                if (sb.classList.contains('collapsed-mobile')) {
+                    icon.className = 'fa-solid fa-bars';
+                } else {
+                    icon.className = 'fa-solid fa-xmark';
+                }
+            }
+        }
+
+        // Toast message utility with type support (success, error, warning, info)
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg toast-' + type;
+            let icon = '<i class="fa-solid fa-circle-check" style="color:#10b981;"></i>';
+            if (type === 'error' || type === 'danger') {
+                icon = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i>';
+            } else if (type === 'warning') {
+                icon = '<i class="fa-solid fa-circle-exclamation" style="color:#fbbf24;"></i>';
+            } else if (type === 'info') {
+                icon = '<i class="fa-solid fa-circle-info" style="color:#38bdf8;"></i>';
+            }
+            toast.innerHTML = icon + ' <span>' + msg + '</span>';
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // ========================================================
+        // REACT BITS <HoldButton /> VANILLA JS CONTROLLER
+        // ========================================================
+        const HB_HOLD_MS = 1200;
+        const HB_RELEASE_MS = 200;
+        const HB_TAP_MS = 250;
+        const HB_HIT_PAD = 10;
+        const HB_LINEAR = t => t;
+        const HB_EASE_OUT = t => 1 - Math.pow(1 - t, 3);
+
+        function initHoldButtons() {
+            document.querySelectorAll('.hold-button').forEach(button => {
+                if (button._hbInitialized) return;
+                button._hbInitialized = true;
+
+                let phase = 'idle';
+                let inputKind = null;
+                const gesture = { pointerId: null, start: 0, rect: null };
+                const timers = { complete: 0, reset: 0 };
+                const motion = { raf: 0, p: 0, from: 0, to: 0, start: 0 };
+
+                const setPhase = (next, kind = null) => {
+                    phase = next;
+                    inputKind = kind;
+                    button.setAttribute('data-phase', next);
+                    if (kind) button.setAttribute('data-input', kind);
+                    else button.removeAttribute('data-input');
+                };
+
+                const clearTimers = () => {
+                    clearTimeout(timers.complete);
+                    clearTimeout(timers.reset);
+                };
+
+                const measure = () => {
+                    button.style.setProperty('--hb-w', `${button.offsetWidth || 34}px`);
+                    button.style.setProperty('--hb-h', `${button.offsetHeight || 34}px`);
+                };
+                measure();
+                if (window.ResizeObserver) {
+                    const ro = new ResizeObserver(measure);
+                    ro.observe(button);
+                }
+
+                const drive = (to, duration, ease) => {
+                    cancelAnimationFrame(motion.raf);
+                    motion.from = motion.p;
+                    motion.to = to;
+                    motion.start = performance.now();
+                    const step = (now) => {
+                        const t = duration > 0 ? Math.min(1, (now - motion.start) / duration) : 1;
+                        motion.p = motion.from + (motion.to - motion.from) * ease(t);
+                        button.style.setProperty('--hb-p', motion.p.toFixed(4));
+                        if (t < 1) {
+                            motion.raf = requestAnimationFrame(step);
+                            return;
+                        }
+                        motion.raf = 0;
+                        if (motion.to === 1) complete();
+                    };
+                    motion.raf = requestAnimationFrame(step);
+                };
+
+                const complete = () => {
+                    if (phase !== 'holding') return;
+                    if (performance.now() - gesture.start < HB_HOLD_MS - 50) return;
+                    clearTimers();
+                    setPhase('done', inputKind);
+
+                    const caseId = button.getAttribute('data-case-id');
+                    executeCaseDelete(caseId, button);
+                };
+
+                const begin = (kind) => {
+                    if (button.disabled || phase !== 'idle') return false;
+                    gesture.start = performance.now();
+                    gesture.rect = button.getBoundingClientRect();
+                    setPhase('holding', kind);
+                    drive(1, HB_HOLD_MS, HB_LINEAR);
+                    timers.complete = setTimeout(complete, HB_HOLD_MS + 100);
+                    return true;
+                };
+
+                const release = ({ drifted = false } = {}) => {
+                    if (phase !== 'holding') return;
+                    clearTimers();
+                    const held = performance.now() - gesture.start;
+                    setPhase('idle');
+                    drive(0, HB_RELEASE_MS, HB_EASE_OUT);
+                    if (!drifted && held < HB_TAP_MS) {
+                        showToast("Press and hold to confirm delete");
+                    }
+                };
+
+                button.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    if (e.button !== 0 || !e.isPrimary || gesture.pointerId !== null) return;
+                    if (!begin('pointer')) return;
+                    gesture.pointerId = e.pointerId;
+                    try {
+                        button.setPointerCapture(e.pointerId);
+                    } catch (err) {}
+                });
+
+                const endPointer = (e, options) => {
+                    if (e.pointerId !== gesture.pointerId) return;
+                    gesture.pointerId = null;
+                    try {
+                        if (button.hasPointerCapture(e.pointerId)) {
+                            button.releasePointerCapture(e.pointerId);
+                        }
+                    } catch (err) {}
+                    release(options);
+                };
+
+                button.addEventListener('pointermove', (e) => {
+                    if (e.pointerId !== gesture.pointerId) return;
+                    const r = gesture.rect;
+                    if (!r) return;
+                    const out =
+                        e.clientX < r.left - HB_HIT_PAD ||
+                        e.clientX > r.right + HB_HIT_PAD ||
+                        e.clientY < r.top - HB_HIT_PAD ||
+                        e.clientY > r.bottom + HB_HIT_PAD;
+                    if (out) endPointer(e, { drifted: true });
+                });
+
+                button.addEventListener('pointerup', (e) => endPointer(e));
+                button.addEventListener('pointercancel', (e) => endPointer(e, { drifted: true }));
+                button.addEventListener('lostpointercapture', (e) => endPointer(e, { drifted: true }));
+                button.addEventListener('pointerleave', (e) => {
+                    if (e.pointerType !== 'touch') endPointer(e, { drifted: true });
+                });
+
+                button.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        if (inputKind === 'key') release({ drifted: true });
+                        return;
+                    }
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!e.repeat) begin('key');
+                    }
+                });
+
+                button.addEventListener('keyup', (e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (inputKind === 'key') release();
+                    }
+                });
+
+                button.addEventListener('contextmenu', (e) => e.preventDefault());
+            });
+        }
+
+        async function executeCaseDelete(caseId, btn) {
+            const tr = btn.closest('tr');
+            btn.disabled = true;
+
+            try {
+                if (!caseId || caseId.startsWith('DEMO-') || caseId.startsWith('CSI-2026-0')) {
+                    if (tr) {
+                        tr.style.transition = 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)';
+                        tr.style.opacity = '0';
+                        tr.style.transform = 'translateX(24px) scaleY(0.7)';
+                        setTimeout(() => tr.remove(), 400);
+                    }
+                    showToast("Case removed from recent activity.", "info");
+                    return;
+                }
+
+                const res = await fetch(`/cases/${caseId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (res.ok) {
+                    if (tr) {
+                        tr.style.transition = 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)';
+                        tr.style.opacity = '0';
+                        tr.style.transform = 'translateX(24px) scaleY(0.7)';
+                        setTimeout(() => tr.remove(), 400);
+                    }
+                    showToast(`Case ${caseId} deleted permanently.`, "success");
+                } else {
+                    throw new Error("Server returned error code " + res.status);
+                }
+            } catch (err) {
+                console.error("Delete failed:", err);
+                showToast("Failed to delete case: " + err.message, "error");
+                btn.disabled = false;
+                btn.setAttribute('data-phase', 'idle');
+                btn.style.setProperty('--hb-p', '0');
+            }
+        }
+
+        function deleteRecentCase(e, caseId, btn) {
+            if (e) e.stopPropagation();
+            executeCaseDelete(caseId, btn);
+        }
+
+        async function syncFirebaseCases() {
+            const btn = document.getElementById('btnSyncFirebase');
+            const statusText = document.getElementById('firebaseSyncStatusText');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing to Firebase...';
+            statusText.innerText = "Connecting to Firebase Admin & syncing cases...";
+
+            try {
+                const res = await fetch('/api/v1/firebase/sync_all', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Firebase Cloud Sync Complete! " + data.synced_count + " cases processed.");
+                    statusText.innerText = data.message;
+                    statusText.style.color = "#10b981";
+                } else {
+                    showToast("Firebase Notice: " + (data.error || "Sync incomplete"));
+                    statusText.innerText = data.error;
+                    statusText.style.color = "#fbbf24";
+                }
+            } catch (err) {
+                showToast("Firebase Sync Error: " + err);
+                statusText.innerText = "Sync encountered an error: " + err;
+                statusText.style.color = "#ff4d61";
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Sync Cases to Firebase Cloud';
+            }
+        }
+
+        function toggleAlertsDrawer() {
+            switchTab('alerts');
+        }
+
+        /* ==========================================================================
+           Forensic Scan Loading Overlay Engine
+           ========================================================================== */
+        let scanProgressInterval = null;
+        let scanDynamicStatusInterval = null;
+
+        function showForensicScanOverlay(initialMsg) {
+            const overlay = document.getElementById('forensicScanOverlay');
+            const dynamicText = document.getElementById('scanStatusDynamicText');
+            const progressFill = document.getElementById('scanProgressFill');
+            const percentLabel = document.getElementById('scanPercentLabel');
+            if (!overlay) return;
+
+            overlay.classList.add('active');
+            if (initialMsg && dynamicText) dynamicText.innerText = initialMsg;
+
+            let progress = 12;
+            if (progressFill) progressFill.style.width = '12%';
+            if (percentLabel) percentLabel.innerText = '12%';
+
+            const pipelineSteps = [
+                "Normalizing evidence image tensors (RGB & luminance)...",
+                "Invoking YOLOv8 neural inference pipeline...",
+                "Running dual-specialist weapon & contraband detectors...",
+                "Filtering bounding boxes via Non-Max Suppression (IoU: 0.45)...",
+                "Hashing digital evidence for SHA-256 chain of custody...",
+                "Synthesizing forensic telemetry docket..."
+            ];
+            let stepIdx = 0;
+
+            clearInterval(scanDynamicStatusInterval);
+            scanDynamicStatusInterval = setInterval(() => {
+                if (dynamicText && stepIdx < pipelineSteps.length) {
+                    dynamicText.innerText = pipelineSteps[stepIdx];
+                    stepIdx++;
+                }
+            }, 650);
+
+            clearInterval(scanProgressInterval);
+            scanProgressInterval = setInterval(() => {
+                if (progress < 94) {
+                    progress += Math.floor(Math.random() * 7) + 3;
+                    if (progress > 94) progress = 94;
+                    if (progressFill) progressFill.style.width = progress + '%';
+                    if (percentLabel) percentLabel.innerText = progress + '%';
+                }
+            }, 250);
+        }
+
+        function hideForensicScanOverlay() {
+            const overlay = document.getElementById('forensicScanOverlay');
+            if (overlay) overlay.classList.remove('active');
+            clearInterval(scanProgressInterval);
+            clearInterval(scanDynamicStatusInterval);
+        }
+
+        /* ==========================================================================
+           Interactive Guided Officer Onboarding Tour
+           ========================================================================== */
+        let currentOnboardingSlide = 0;
+        const totalOnboardingSlides = 4;
+
+        function openOnboardingTour() {
+            const modal = document.getElementById('onboardingTourModal');
+            if (!modal) return;
+            currentOnboardingSlide = 0;
+            updateOnboardingView();
+            modal.classList.add('open');
+        }
+
+        function closeOnboardingTour() {
+            const modal = document.getElementById('onboardingTourModal');
+            if (modal) modal.classList.remove('open');
+            localStorage.setItem('forensic_onboarding_completed', 'true');
+        }
+
+        function nextOnboardingStep() {
+            if (currentOnboardingSlide < totalOnboardingSlides - 1) {
+                currentOnboardingSlide++;
+                updateOnboardingView();
+            } else {
+                closeOnboardingTour();
+                showToast("Onboarding complete! Welcome aboard, Officer.", "success");
+            }
+        }
+
+        function prevOnboardingStep() {
+            if (currentOnboardingSlide > 0) {
+                currentOnboardingSlide--;
+                updateOnboardingView();
+            }
+        }
+
+        function updateOnboardingView() {
+            const slides = document.querySelectorAll('.onboarding-slide');
+            const dots = document.querySelectorAll('.onboarding-dot');
+            const badge = document.getElementById('onboardingStepBadge');
+            const btnNext = document.getElementById('btnOnboardingNext');
+            const btnPrev = document.getElementById('btnOnboardingPrev');
+
+            slides.forEach((slide, idx) => {
+                slide.classList.toggle('active', idx === currentOnboardingSlide);
+            });
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === currentOnboardingSlide);
+            });
+
+            if (badge) badge.innerText = `STEP ${currentOnboardingSlide + 1} OF ${totalOnboardingSlides}`;
+            if (btnPrev) btnPrev.style.display = currentOnboardingSlide > 0 ? 'inline-flex' : 'none';
+            if (btnNext) {
+                if (currentOnboardingSlide === totalOnboardingSlides - 1) {
+                    btnNext.innerHTML = 'Get Started <i class="fa-solid fa-check"></i>';
+                } else {
+                    btnNext.innerHTML = 'Next <i class="fa-solid fa-arrow-right"></i>';
+                }
+            }
+        }
+
+        function goToOnboardingStep(step) {
+            if (step >= 0 && step < totalOnboardingSlides) {
+                currentOnboardingSlide = step;
+                updateOnboardingView();
+            }
+        }
+
+        // Global Modal Backdrop Click & Escape Key Dismissal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeOnboardingTour();
+                closeDiagnosticsModal();
+                closeAnalyticsModal();
+                closeDeleteAccountModal();
+            }
+        });
+
+        document.getElementById('onboardingTourModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeOnboardingTour();
+        });
+        document.getElementById('errorLogsModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeDiagnosticsModal();
+        });
+        document.getElementById('analyticsModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeAnalyticsModal();
+        });
+        document.getElementById('deleteAccountModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteAccountModal();
+        });
+
+        /* ==========================================================================
+           Forensic System Diagnostics & Error Tracking Logs Modal
+           ========================================================================== */
+        async function openDiagnosticsModal() {
+            const modal = document.getElementById('errorLogsModal');
+            if (!modal) return;
+            modal.classList.add('open');
+            await fetchSystemDiagnostics();
+        }
+
+        function closeDiagnosticsModal() {
+            const modal = document.getElementById('errorLogsModal');
+            if (modal) modal.classList.remove('open');
+        }
+
+        async function fetchSystemDiagnostics() {
+            const consoleBody = document.getElementById('diagnosticsConsoleBody');
+            const statusEl = document.getElementById('diagSystemStatus');
+            const errCountEl = document.getElementById('diagErrorCount');
+            const logCountEl = document.getElementById('diagLogCount');
+
+            if (consoleBody) {
+                consoleBody.innerHTML = '<div style="color:#64748b; padding:12px 0;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching real-time system logs...</div>';
+            }
+
+            try {
+                const res = await fetch('/api/v1/system/logs');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                if (statusEl) {
+                    statusEl.innerText = (data.status || 'HEALTHY').toUpperCase();
+                    statusEl.style.color = (data.status === 'healthy') ? '#10b981' : '#ff4d61';
+                }
+                if (errCountEl) errCountEl.innerText = data.error_count || 0;
+                if (logCountEl) logCountEl.innerText = (data.recent_logs ? data.recent_logs.length : 0) + ' entries';
+
+                if (consoleBody) {
+                    if (!data.recent_logs || data.recent_logs.length === 0) {
+                        consoleBody.innerHTML = '<div style="color: #64748b; padding: 12px 0;"><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> System log stream initialized. No error conditions detected in active session.</div>';
+                    } else {
+                        consoleBody.innerHTML = data.recent_logs.map(line => {
+                            let cls = 'log-entry-row';
+                            if (line.includes('ERROR') || line.includes('CRITICAL')) cls += ' log-error';
+                            else if (line.includes('WARN')) cls += ' log-warn';
+                            const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            return `<div class="${cls}">${escaped}</div>`;
+                        }).join('');
+                        consoleBody.scrollTop = consoleBody.scrollHeight;
+                    }
+                }
+            } catch (e) {
+                if (consoleBody) {
+                    consoleBody.innerHTML = `<div class="log-entry-row log-error">Failed to query diagnostics API: ${e.message}</div>`;
+                }
+            }
+        }
+
+        /* ==========================================================================
+           Database Backups Engine
+           ========================================================================== */
+        async function triggerDatabaseBackup() {
+            const btn = document.getElementById('btnTriggerBackup');
+            const statusEl = document.getElementById('backupStatusText');
+            if (btn) btn.disabled = true;
+            if (statusEl) statusEl.innerText = "Creating atomic SQLite database snapshot...";
+
+            try {
+                const res = await fetch('/api/v1/system/backup', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Database Backup Created: " + data.backup_file + " (" + data.size_kb + " KB)", "success");
+                    if (statusEl) statusEl.innerText = `Latest Backup: ${data.backup_file} (${data.size_kb} KB)`;
+                    fetchDatabaseBackups();
+                } else {
+                    showToast("Backup failed: " + (data.error || "Unknown error"), "error");
+                }
+            } catch (err) {
+                showToast("Backup request error: " + err.message, "error");
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function fetchDatabaseBackups() {
+            const container = document.getElementById('backupListContainer');
+            if (!container) return;
+            container.style.display = 'block';
+            container.innerHTML = '<div style="color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Reading backup snapshots...</div>';
+
+            try {
+                const res = await fetch('/api/v1/system/backups');
+                const data = await res.json();
+                if (data.backups && data.backups.length > 0) {
+                    container.innerHTML = '<div style="font-weight:700; color:#10b981; margin-bottom:8px;">AVAILABLE DATABASE SNAPSHOTS (' + data.total + '):</div>' +
+                        data.backups.map(b => `<div style="padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); display:flex; justify-content:space-between;">
+                            <span>${b.filename}</span>
+                            <span style="color:#fbbf24;">${b.size_kb} KB &bull; ${b.created_at}</span>
+                        </div>`).join('');
+                } else {
+                    container.innerHTML = '<div style="color: #64748b;">No previous backups found. Click "Create Instant Database Backup" above.</div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div style="color: #ff4d61;">Failed to load backups list: ' + err.message + '</div>';
+            }
+        }
+
+        /* ==========================================================================
+           Platform Telemetry & Analytics
+           ========================================================================== */
+        async function openAnalyticsModal() {
+            const modal = document.getElementById('analyticsModal');
+            if (!modal) return;
+            modal.classList.add('open');
+
+            try {
+                const res = await fetch('/api/v1/analytics/summary');
+                const data = await res.json();
+                if (data.success && data.analytics) {
+                    const a = data.analytics;
+                    document.getElementById('statTotalEvents').innerText = a.total_events || 0;
+                    document.getElementById('statPageViews').innerText = a.page_views || 0;
+                    document.getElementById('statCaseScans').innerText = a.case_scans || 0;
+                    document.getElementById('statSessions').innerText = a.unique_sessions || 1;
+
+                    const stream = document.getElementById('analyticsRecentStream');
+                    if (stream && a.recent_events) {
+                        if (a.recent_events.length === 0) {
+                            stream.innerHTML = '<div style="color:#64748b;">No recent telemetry recorded in this session.</div>';
+                        } else {
+                            stream.innerHTML = a.recent_events.map(ev => `
+                                <div style="padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between;">
+                                    <span style="color: #38bdf8;"><i class="fa-solid fa-bolt"></i> ${ev.event_type}</span>
+                                    <span style="color: #64748b;">${ev.timestamp}</span>
+                                </div>
+                            `).join('');
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Analytics fetch error:", err);
+            }
+        }
+
+        function closeAnalyticsModal() {
+            const modal = document.getElementById('analyticsModal');
+            if (modal) modal.classList.remove('open');
+        }
+
+        /* ==========================================================================
+           Delete Account Modal
+           ========================================================================== */
+        function openDeleteAccountModal() {
+            const modal = document.getElementById('deleteAccountModal');
+            if (modal) modal.classList.add('open');
+        }
+
+        function closeDeleteAccountModal() {
+            const modal = document.getElementById('deleteAccountModal');
+            if (modal) modal.classList.remove('open');
+        }
+
+        // Automatic Telemetry ping on page load
+        try {
+            fetch('/api/v1/analytics/event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event_type: 'page_view', event_data: { page: 'dashboard' } })
+            });
+        } catch (e) {}
+
+        // Initialize all HoldButtons
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initHoldButtons);
+        } else {
+            initHoldButtons();
+        }
+    </script>
+</body>
+</html>

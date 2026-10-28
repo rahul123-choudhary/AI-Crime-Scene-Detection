@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+    <title>CSI Forensic AI — Next-Gen Crime Scene Evidence Detection & Intelligence</title>
+    <meta name="description" content="AI-assisted real-time crime scene evidence detection, automated ballistics localization, latent blood spatter enhancement, and CJIS-compliant forensic case reporting.">
+    <meta name="keywords" content="forensic AI, crime scene detection, computer vision, ballistics localization, evidence intake, criminalistics">
+    <meta property="og:title" content="CSI Forensic AI — Detect. Analyze. Alert.">
+    <meta property="og:description" content="Using advanced AI and computer vision, detect critical evidence and threats in crime scenes for faster, safer investigations.">
+    <meta property="og:type" content="website">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-black: #07090e;
+            --primary-red: #ff2b42;
+            --primary-gradient-red: linear-gradient(135deg, #ff2b42 0%, #cf192e 100%);
+            --accent-yellow: #fbbf24;
+            --accent-yellow-solid: #f59e0b;
+            --yellow-gradient: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+            --text-white: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --hazard-stripes: repeating-linear-gradient(-45deg,
+                    #fbbf24,
+                    #fbbf24 14px,
+                    #11141c 14px,
+                    #11141c 28px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+            width: 100%;
+            background-color: var(--bg-black);
+            color: var(--text-white);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Ambient Background with Crime Scene Photo */
+        .hero-background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background-image: url('/static/images/hero_crime_bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: saturate(1.2) contrast(1.3);
+        }
+
+        /* Ambient glowing lights overlay */
+        .ambient-glow-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(255, 43, 66, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 75% 70%, rgba(251, 191, 36, 0.08) 0%, transparent 40%);
+        }
+
+        /* Main UI Container */
+        .site-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            max-width: 100%;
+        }
+
+        /* Header Navigation */
+        .main-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 48px;
+            width: 100%;
+            position: relative;
+            z-index: 50;
+            gap: 20px;
+        }
+
+        .header-middle-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        @media (max-width: 960px) {
+            .header-middle-nav {
+                display: none;
+            }
+        }
+
+        /* GooeyNav Component from React Bits */
+        .gooey-nav {
+            --gn-pad: 5px;
+            --gn-gap: 4px;
+            --gn-font: 13.5px;
+            --gn-x: 16px;
+            --gn-y: 8px;
+            --gn-frame: rgba(15, 20, 30, 0.75);
+            --gn-frame-edge: rgba(255, 255, 255, 0.1);
+            --gn-frame-highlight: rgba(255, 255, 255, 0.08);
+            --gn-frame-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.8), 0 6px 16px -6px rgba(0, 0, 0, 0.5);
+            --gn-ink: #ffffff;
+            --gn-muted: rgba(226, 232, 240, 0.72);
+            --gn-pill: #fbbf24;
+            --gn-active-ink: #0d1117;
+            position: relative;
+            display: inline-flex;
+            max-width: 100%;
+            font-size: var(--gn-font);
+            line-height: 1.2;
+            user-select: none;
+        }
+
+        .gooey-nav--framed {
+            padding: var(--gn-pad);
+            border-radius: 999px;
+            background: var(--gn-frame);
+            box-shadow: var(--gn-frame-shadow);
+            -webkit-backdrop-filter: blur(20px) saturate(1.6);
+            backdrop-filter: blur(20px) saturate(1.6);
+            border: 1px solid var(--gn-frame-edge);
+        }
+
+        .gooey-nav__stage {
+            position: relative;
+            max-width: 100%;
+        }
+
+        .gooey-nav__canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .gooey-nav__fallback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            border-radius: 999px;
+            background: var(--gn-pill);
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .gooey-nav__list {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: var(--gn-gap);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .gooey-nav__list--active {
+            position: absolute;
+            inset: 0;
+            color: var(--gn-active-ink);
+            visibility: hidden;
+            clip-path: inset(100%);
+            pointer-events: none;
+            font-weight: 700;
+        }
+
+        .gooey-nav__item {
+            display: flex;
+        }
+
+        .gooey-nav__link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: var(--gn-y) var(--gn-x);
+            border: none;
+            border-radius: 999px;
+            background: none;
+            color: var(--gn-muted);
+            font: inherit;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .gooey-nav__list--active .gooey-nav__link {
+            color: inherit;
+        }
+
+        .gooey-nav__item[data-active] .gooey-nav__link {
+            color: var(--gn-ink);
+        }
+
+        .gooey-nav__link:focus-visible {
+            outline: 2px solid var(--gn-ink);
+            outline-offset: 2px;
+        }
+
+        .gooey-nav__icon {
+            display: inline-flex;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .gooey-nav__rim {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            box-shadow:
+                inset 0 0 0 1px var(--gn-frame-edge),
+                inset 0 1px 0 var(--gn-frame-highlight);
+            pointer-events: none;
+        }
+
+        @media (hover: hover) {
+            .gooey-nav__link:hover {
+                color: var(--gn-ink);
+            }
+        }
+
+        .brand-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .brand-logo-wrap:hover {
+            transform: scale(1.02);
+        }
+
+        .shield-icon-badge {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shield-icon-badge svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px rgba(255, 43, 66, 0.7));
+        }
+
+        .brand-text-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+        }
+
+        .brand-text-title span {
+            color: var(--accent-yellow);
+            text-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+        }
+        /* Header Login Button */
+        .btn-header-login {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 22px;
+            background: rgba(18, 22, 32, 0.7);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            color: #ffffff;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+        }
+
+        .btn-header-login i {
+            color: var(--accent-yellow);
+            font-size: 13px;
+        }
+
+        .btn-header-login:hover {
+            border-color: var(--accent-yellow);
+            background: rgba(251, 191, 36, 0.15);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .header-auth-buttons {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-header-user {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: rgba(18, 22, 32, 0.85);
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            color: #00ff88;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 700;
+            transition: all 0.25s ease;
+        }
+
+        .btn-header-user:hover {
+            background: rgba(0, 255, 136, 0.15);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-header-logout {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 43, 66, 0.12);
+            border: 1px solid rgba(255, 43, 66, 0.35);
+            color: #ff4d61;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .btn-header-logout:hover {
+            background: #ff334b;
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(255, 43, 66, 0.5);
+        }
+
+        /* Hero Content Section */
+        .hero-section-wrapper {
+            padding: 20px 54px 60px;
+            max-width: 820px;
+        }
+
+        .hero-eyebrow-red {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #ff5266;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            background: rgba(255, 43, 66, 0.16);
+            border: 1px solid rgba(255, 43, 66, 0.45);
+            padding: 6px 16px;
+            border-radius: 9999px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 43, 66, 0.2);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        }
+
+        .red-dash-line {
+            width: 18px;
+            height: 2.5px;
+            background: #ff5266;
+            border-radius: 2px;
+            box-shadow: 0 0 8px rgba(255, 82, 102, 0.7);
+        }
+
+        .hero-main-title {
+            font-size: 64px;
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -1.5px;
+            margin-bottom: 14px;
+            color: #ffffff;
+            text-shadow: 
+                0 3px 6px rgba(0, 0, 0, 0.95),
+                0 8px 24px rgba(0, 0, 0, 0.95),
+                0 0 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .hero-main-title .highlight-yellow {
+            color: #fbbf24;
+            text-shadow: 
+                0 3px 6px rgba(0, 0, 0, 0.95),
+                0 8px 24px rgba(0, 0, 0, 0.95),
+                0 0 35px rgba(251, 191, 36, 0.65);
+        }
+
+        .hero-subheading {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 22px;
+            letter-spacing: -0.2px;
+            text-shadow: 
+                0 2px 6px rgba(0, 0, 0, 0.95),
+                0 6px 20px rgba(0, 0, 0, 0.95);
+        }
+
+        .hero-paragraph {
+            font-size: 16.5px;
+            line-height: 1.7;
+            color: #f8fafc;
+            max-width: 620px;
+            margin-bottom: 34px;
+            font-weight: 500;
+            background: rgba(10, 14, 24, 0.76);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 16px 22px;
+            border-radius: 12px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+        }
+
+        .hero-buttons-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 44px;
+            flex-wrap: wrap;
+        }
+
+        .btn-get-started-yellow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 34px;
+            background: var(--yellow-gradient);
+            color: #11141c;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 800;
+            transition: all 0.25s ease;
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.5), 0 4px 15px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .btn-get-started-yellow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(251, 191, 36, 0.75), 0 6px 20px rgba(0, 0, 0, 0.6);
+            color: #000000;
+        }
+
+        .btn-learn-more-dark {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 30px;
+            background: rgba(18, 22, 32, 0.7);
+            border: 1px solid var(--border-glass);
+            color: #ffffff;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+        }
+
+        .btn-learn-more-dark:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* 3-Item Feature Badges Row */
+        .features-horizontal-row {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .feature-badge-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(10, 14, 24, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            padding: 12px 20px;
+            border-radius: 14px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65);
+        }
+
+        .feature-icon-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+        }
+
+        .feature-text-bold {
+            font-size: 14px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.1px;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+        }
+
+        .feature-text-sub {
+            font-size: 12px;
+            color: #cbd5e1;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        }
+
+        /* Hazard Corner Accent */
+        .hazard-corner-stripes {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 90px;
+            height: 90px;
+            background: var(--hazard-stripes);
+            clip-path: polygon(100% 0, 0 100%, 100% 100%);
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        /* Modern Landing Footer */
+        .landing-footer {
+            background: rgba(6, 9, 14, 0.95);
+            border-top: 1px solid var(--border-glass);
+            padding: 36px 54px 24px;
+            color: var(--text-muted);
+            font-size: 13.5px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .landing-footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .landing-footer-grid h5 {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .landing-footer-grid ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .landing-footer-grid a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .landing-footer-grid a:hover {
+            color: var(--accent-yellow);
+        }
+
+        .contact-pill-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .contact-pill-link:hover {
+            color: var(--accent-yellow);
+        }
+
+        .contact-pill-link i {
+            color: var(--accent-yellow);
+        }
+
+        .landing-footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 12.5px;
+        }
+
+        /* Modal Styles */
+        .login-modal-backdrop, .feature-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 7, 11, 0.8);
+            backdrop-filter: blur(14px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .login-modal-backdrop.open, .feature-modal-backdrop.open {
+            display: flex !important;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .login-card-container, .feature-card-container {
+            position: relative;
+            width: 440px;
+            max-width: 90vw;
+            background: #0d1017;
+            border: 1px solid rgba(255, 43, 66, 0.4);
+            border-radius: 18px;
+            padding: 34px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 43, 66, 0.15);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .login-modal-backdrop.open .login-card-container,
+        .feature-modal-backdrop.open .feature-card-container {
+            transform: scale(1);
+        }
+
+        .close-modal-btn {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .close-modal-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 43, 66, 0.2);
+            border-color: var(--primary-red);
+        }
+
+        .login-brand-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .login-brand-text .title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.1;
+        }
+
+        .login-brand-text .subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-yellow);
+            letter-spacing: 0.06em;
+        }
+
+        .login-card-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 6px;
+        }
+
+        .login-card-subtitle {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            margin-bottom: 22px;
+        }
+
+        .form-input-group {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        .form-input-group .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .login-text-input {
+            width: 100%;
+            background: #131722;
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 12px 40px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .login-text-input:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 12px rgba(255, 43, 66, 0.3);
+        }
+
+        .input-eye-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-submit-red-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-gradient-red);
+            border: none;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            box-shadow: 0 0 20px rgba(255, 43, 66, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit-red-login:hover {
+            box-shadow: 0 0 30px rgba(255, 43, 66, 0.65);
+            transform: translateY(-1px);
+        }
+
+        .or-divider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border-glass);
+        }
+
+        .divider-text {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+
+        .btn-google-login {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 11px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-google-login:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .login-card-footer {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 12.5px;
+            color: var(--text-muted);
+        }
+
+        .login-card-footer a {
+            color: var(--accent-yellow);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .main-header {
+                padding: 18px 24px;
+            }
+            .hero-section-wrapper {
+                padding: 20px 24px 40px;
+            }
+            .hero-main-title {
+                font-size: 42px;
+            }
+            .hero-subheading {
+                font-size: 20px;
+            }
+            .landing-footer {
+                padding: 30px 24px 20px;
+            }
+            .landing-footer-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background Layers (100% width, no horizontal scroll) -->
+    <div class="hero-background-layer"></div>
+    <div class="ambient-glow-layer"></div>
+
+    <!-- UI Overlay Layer -->
+    <div class="site-container">
+
+        <!-- Top Header Navigation -->
+        <header class="main-header">
+            <a href="{{ url_for('web.dashboard') }}" class="brand-logo-wrap" title="Go to Command Dashboard">
+                <div class="shield-icon-badge">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 5 L88 22 V52 C88 74 50 95 50 95 C50 95 12 74 12 52 V22 Z" fill="#121620"
+                            stroke="url(#shieldGradH)" stroke-width="5" />
+                        <circle cx="50" cy="48" r="22" stroke="#ff2b42" stroke-width="4" stroke-dasharray="8 4" />
+                        <line x1="50" y1="20" x2="50" y2="76" stroke="#fbbf24" stroke-width="3" />
+                        <line x1="22" y1="48" x2="78" y2="48" stroke="#fbbf24" stroke-width="3" />
+                        <circle cx="50" cy="48" r="5" fill="#ff2b42" />
+                        <defs>
+                            <linearGradient id="shieldGradH" x1="0" y1="0" x2="100" y2="100">
+                                <stop offset="0%" stop-color="#ff2b42" />
+                                <stop offset="100%" stop-color="#fbbf24" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="brand-text-title">Crime Scene <span>Detection</span></div>
+            </a>
+
+            <!-- Top Middle GooeyNav Component -->
+            <div class="header-middle-nav">
+                <nav class="gooey-nav gooey-nav--md gooey-nav--framed" id="topGooeyNav">
+                    <span class="gooey-nav__rim"></span>
+                    <div class="gooey-nav__stage" id="gooeyNavStage">
+                        <canvas class="gooey-nav__canvas" id="gooeyNavCanvas" aria-hidden="true"></canvas>
+                        <span class="gooey-nav__fallback" id="gooeyNavFallback" aria-hidden="true"></span>
+                        <ul class="gooey-nav__list" id="gooeyNavList">
+                            <!-- Populated dynamically by GooeyNav engine -->
+                        </ul>
+                        <ul class="gooey-nav__list gooey-nav__list--active" id="gooeyNavOverlay" aria-hidden="true">
+                            <!-- Active text clip overlay -->
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+
+            {% if current_user %}
+            <div class="header-auth-buttons">
+                <a href="{{ url_for('web.dashboard') }}" class="btn-header-user">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>{{ current_user.name }}</span>
+                </a>
+                <a href="{{ url_for('web.logout') }}" class="btn-header-logout" title="Sign Out">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </a>
+            </div>
+            {% else %}
+            <button type="button" class="btn-header-login" onclick="openLoginModal()">
+                <i class="fa-regular fa-user"></i>
+                <span>Login</span>
+            </button>
+            {% endif %}
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="landing-flash-wrapper" style="max-width: 640px; margin: 12px auto 0; padding: 0 24px; width: 100%; position: relative; z-index: 100;">
+                    {% for category, message in messages %}
+                        <div class="landing-flash-alert alert-{{ category }}" style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(251, 191, 36, 0.4); border-left: 4px solid #fbbf24; border-radius: 10px; padding: 12px 18px; color: #f8fafc; font-size: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fa-solid fa-circle-check" style="color: #fbbf24; font-size: 16px;"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size: 18px; line-height: 1;" aria-label="Dismiss">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Hero Content Section -->
+        <main class="hero-section-wrapper">
+            <div class="hero-eyebrow-red">
+                <span class="red-dash-line"></span>
+                <span>AI POWERED</span>
+            </div>
+
+            <h1 class="hero-main-title">
+                Crime Scene
+                <span class="highlight-yellow">Detection</span>
+            </h1>
+
+            <div class="hero-subheading">Detect. Analyze. Alert.</div>
+
+            <p class="hero-paragraph" id="heroMainContent">
+                Using advanced AI and computer vision, our system detects critical evidence, dangerous weapons, and ballistic traces in crime scenes for faster and safer investigations.
+            </p>
+
+            <div class="hero-buttons-row">
+                <a href="{{ url_for('web.dashboard') }}" class="btn-get-started-yellow">
+                    <span>Get Started</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- 3-Item Feature Badges Row -->
+            <div class="features-horizontal-row" id="featuresRow">
+                <div class="feature-badge-item">
+                    <div class="feature-icon-circle" style="color: #ff2b42;">
+                        <i class="fa-solid fa-crosshairs"></i>
+                    </div>
+                    <div>
+                        <div class="feature-text-bold">AI Detection</div>
+                        <div class="feature-text-sub">YOLOv8 Real-time Engine</div>
+                    </div>
+                </div>
+
+                <div class="feature-badge-item">
+                    <div class="feature-icon-circle" style="color: #fbbf24;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <div class="feature-text-bold">Real-time Alerts</div>
+                        <div class="feature-text-sub">Instant Threat Notifications</div>
+                    </div>
+                </div>
+
+                <div class="feature-badge-item">
+                    <div class="feature-icon-circle" style="color: #38bdf8;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <div class="feature-text-bold">Safer Investigation</div>
+                        <div class="feature-text-sub">Chain-of-Custody Verified</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modern Landing Footer -->
+        <footer class="landing-footer" id="contactFooter">
+            <div class="landing-footer-grid">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                        <span style="font-size: 16px; font-weight: 800; color: #ffffff;">CSI FORENSIC AI</span>
+                    </div>
+                    <p style="color: #94a3b8; line-height: 1.5; font-size: 13px; margin-bottom: 14px;">
+                        State-of-the-art automated evidence extraction, ballistic recognition, and crime scene intelligence for federal and municipal investigators.
+                    </p>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="tel:+18005552746" class="contact-pill-link" title="Call Emergency Hotline">
+                            <i class="fa-solid fa-phone"></i> +1 (800) 555-CRIME
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h5>Platform</h5>
+                    <ul>
+                        <li><a href="{{ url_for('web.dashboard') }}">Command Dashboard</a></li>
+                        <li><a href="{{ url_for('web.index') }}">Evidence Intake</a></li>
+                        <li><a href="{{ url_for('web.live_monitor') }}">Live Camera</a></li>
+                        <li><a href="{{ url_for('web.cases_archive') }}">Case Registry</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5>Resources</h5>
+                    <ul>
+                        <li><a href="{{ url_for('web.api_docs') }}">API Documentation</a></li>
+                        <li><a href="{{ url_for('web.dashboard') }}?tab=alerts">Live Incident Alerts</a></li>
+                        <li><a href="{{ url_for('web.signup') }}">Officer Registration</a></li>
+                        <li><a href="{{ url_for('web.privacy_policy') }}">Privacy Policy</a></li>
+                        <li><a href="{{ url_for('web.terms_of_service') }}">Terms of Service</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5>Dispatch & Contact</h5>
+                    <div style="margin-bottom: 8px;">
+                        <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">24/7 Forensic Dispatch</div>
+                        <a href="tel:+18005552746" class="contact-pill-link">+1 (800) 555-CRIME</a>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Secure Intelligence Inquiries</div>
+                        <a href="mailto:dispatch@csi-forensic.ai" class="contact-pill-link">
+                            <i class="fa-solid fa-envelope"></i> dispatch@csi-forensic.ai
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="landing-footer-bottom">
+                <div>
+                    &copy; 2026 CSI Forensic AI Intelligence Systems. All Rights Reserved.
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <a href="{{ url_for('web.privacy_policy') }}">Privacy Policy</a>
+                    <span>&bull;</span>
+                    <a href="{{ url_for('web.terms_of_service') }}">Terms of Service</a>
+                    <span>&bull;</span>
+                    <a href="mailto:dispatch@csi-forensic.ai">Investigator Support</a>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Hazard Corner Ribbon Accent -->
+    <div class="hazard-corner-stripes"></div>
+
+    <!-- ========================================================
+         LOGIN MODAL COMPONENT
+         ======================================================== -->
+    <div class="login-modal-backdrop {% if show_login %}open{% endif %}" id="loginModal">
+        <div class="login-card-container">
+            <button type="button" class="close-modal-btn" onclick="closeLoginModal()" aria-label="Close modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="login-brand-header">
+                <div style="width: 38px; height: 38px;">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 5 L88 22 V52 C88 74 50 95 50 95 C50 95 12 74 12 52 V22 Z" fill="#121620"
+                            stroke="#ff2b42" stroke-width="5" />
+                        <circle cx="50" cy="48" r="22" stroke="#ff2b42" stroke-width="4" stroke-dasharray="8 4" />
+                        <line x1="50" y1="20" x2="50" y2="76" stroke="#fbbf24" stroke-width="3" />
+                        <line x1="22" y1="48" x2="78" y2="48" stroke="#fbbf24" stroke-width="3" />
+                        <circle cx="50" cy="48" r="5" fill="#ff2b42" />
+                    </svg>
+                </div>
+                <div class="login-brand-text">
+                    <div class="title">CRIME SCENE</div>
+                    <div class="subtitle">DETECTION</div>
+                </div>
+            </div>
+
+            <h2 class="login-card-title">Welcome Back</h2>
+            <p class="login-card-subtitle">Sign in to continue to your workspace</p>
+
+            <form action="{{ url_for('web.login') }}" method="post" id="loginAuthForm" autocomplete="off">
+                <div class="form-input-group">
+                    <i class="fa-regular fa-envelope input-icon"></i>
+                    <input type="text" name="username" id="loginUsernameInput" class="login-text-input"
+                        placeholder="Email or Username" value="" autocomplete="off" required>
+                </div>
+
+                <div class="form-input-group">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password" id="loginPasswordInput" name="password" class="login-text-input"
+                        placeholder="Password" value="" autocomplete="new-password" required>
+                    <i class="fa-regular fa-eye input-eye-toggle"
+                        onclick="togglePasswordVisibility('loginPasswordInput')"></i>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 12px; margin-top: -6px;">
+                    <a href="{{ url_for('web.forgot_password') }}" style="color: var(--accent-yellow); font-size: 12px; text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn-submit-red-login">
+                    <span>Login</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="or-divider-row">
+                <div class="divider-line"></div>
+                <div class="divider-text">OR</div>
+                <div class="divider-line"></div>
+            </div>
+
+            <a href="javascript:void(0)" onclick="quickGoogleLogin()" class="btn-google-login">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>Continue with Google</span>
+            </a>
+
+            <div class="login-card-footer">
+                Don't have an account? <a href="{{ url_for('web.signup') }}">Create Account</a>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Scripts -->
+    <script>
+        function clearAuthInputs() {
+            const loginForm = document.getElementById('loginAuthForm');
+            if (loginForm) {
+                loginForm.reset();
+                loginForm.querySelectorAll('input').forEach(inp => {
+                    inp.value = '';
+                });
+            }
+        }
+
+        function openLoginModal() {
+            clearAuthInputs();
+            document.getElementById('loginModal').classList.add('open');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('open');
+            clearAuthInputs();
+        }
+
+        function togglePasswordVisibility(inputId = 'loginPasswordInput') {
+            const pwd = document.getElementById(inputId);
+            if (pwd) {
+                pwd.type = pwd.type === 'password' ? 'text' : 'password';
+            }
+        }
+
+        // Close modals on backdrop click or escape
+        document.getElementById('loginModal').addEventListener('click', function (e) {
+            if (e.target === this) closeLoginModal();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeLoginModal();
+            }
+        });
+
+        function quickGoogleLogin() {
+            clearAuthInputs();
+            const form = document.getElementById('loginAuthForm');
+            if (form) {
+                const uInp = form.querySelector('input[name="username"]');
+                const pInp = form.querySelector('input[name="password"]');
+                if (uInp) uInp.value = "officer@forensic.gov";
+                if (pInp) pInp.value = "Password@123";
+                form.submit();
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', clearAuthInputs);
+        window.addEventListener('pageshow', clearAuthInputs);
+
+        /* ==========================================================================
+           React Bits: GooeyNav Engine (JavaScript + WebGL2 Shaders + Physics)
+           ========================================================================== */
+        (function initGooeyNavComponent() {
+            const nav = document.getElementById('topGooeyNav');
+            const stage = document.getElementById('gooeyNavStage');
+            const canvas = document.getElementById('gooeyNavCanvas');
+            const list = document.getElementById('gooeyNavList');
+            const overlay = document.getElementById('gooeyNavOverlay');
+            const fallback = document.getElementById('gooeyNavFallback');
+            if (!nav || !stage || !canvas || !list || !overlay || !fallback) return;
+
+            const items = [
+                { label: 'HOME', href: '#home', icon: '<i class="fa-solid fa-house"></i>' },
+                { label: 'CONTENT', href: '#content', icon: '<i class="fa-solid fa-layer-group"></i>' },
+                { label: 'PREFERENCE', href: '#preference', icon: '<i class="fa-solid fa-sliders"></i>' },
+                { label: 'FEATURES', href: '#features', icon: '<i class="fa-solid fa-wand-magic-sparkles"></i>' }
+            ];
+
+            const config = {
+                initialActiveIndex: 0,
+                color: '#fbbf24',
+                colors: ['#ff2b42', '#fbbf24', '#38bdf8'],
+                animationTime: 600,
+                particleCount: 15,
+                spread: 56,
+                timeVariance: 300,
+                gooeyness: 0.5,
+                wobble: 0.5,
+                hoverEffect: true
+            };
+
+            const MAX_DROPS = 32;
+            const MAX_PILLS = 6;
+            const MARGIN = 72;
+
+            const VERTEX = `#version 300 es
+            in vec2 aPosition;
+            void main() {
+                gl_Position = vec4(aPosition, 0.0, 1.0);
+            }`;
+
+            const FRAGMENT = `#version 300 es
+            precision highp float;
+
+            uniform vec2 uSize;
+            uniform float uRatio;
+            uniform vec4 uPills[${MAX_PILLS}];
+            uniform vec4 uHover;
+            uniform vec4 uDrops[${MAX_DROPS}];
+            uniform vec2 uTails[${MAX_DROPS}];
+            uniform vec3 uTints[${MAX_DROPS}];
+            uniform int uCount;
+            uniform float uSmooth;
+            uniform vec3 uPill;
+            uniform vec4 uHoverColor;
+            uniform float uShadow;
+
+            out vec4 outColor;
+
+            float sdPill(vec2 p, vec4 box) {
+                vec2 extent = max(box.zw, vec2(0.0));
+                float r = min(extent.x, extent.y);
+                vec2 q = abs(p - box.xy) - extent + r;
+                return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+            }
+
+            float sdCapsule(vec2 p, vec2 a, vec2 b, float r) {
+                vec2 pa = p - a;
+                vec2 ba = b - a;
+                float h = clamp(dot(pa, ba) / max(dot(ba, ba), 0.0001), 0.0, 1.0);
+                return length(pa - ba * h) - r;
+            }
+
+            vec4 blend(vec4 a, vec4 b, float k) {
+                float h = clamp(0.5 + 0.5 * (b.w - a.w) / k, 0.0, 1.0);
+                return vec4(mix(b.rgb, a.rgb, h), mix(b.w, a.w, h) - k * h * (1.0 - h));
+            }
+
+            vec4 field(vec2 p) {
+                vec4 shape = vec4(uPill, 1e5);
+                for (int i = 0; i < ${MAX_PILLS}; i++) {
+                    vec4 pill = uPills[i];
+                    if (pill.z <= 0.0) continue;
+                    shape = blend(shape, vec4(uPill, sdPill(p, pill)), uSmooth);
+                }
+                for (int i = 0; i < ${MAX_DROPS}; i++) {
+                    if (i >= uCount) break;
+                    vec4 drop = uDrops[i];
+                    if (drop.z <= 0.0) continue;
+                    float d = sdCapsule(p, drop.xy, drop.xy - uTails[i], drop.z);
+                    if (d > shape.w + uSmooth) continue;
+                    shape = blend(shape, vec4(uTints[i], d), uSmooth);
+                }
+                return shape;
+            }
+
+            void main() {
+                vec2 p = vec2(gl_FragCoord.x, uSize.y * uRatio - gl_FragCoord.y) / uRatio;
+                vec4 shape = field(p);
+                float d = shape.w;
+                float aa = max(fwidth(d), 0.35);
+                float body = clamp(0.5 - d / aa, 0.0, 1.0);
+
+                vec2 grad = vec2(dFdx(d), -dFdy(d));
+                vec2 n = length(grad) > 0.0001 ? normalize(grad) : vec2(0.0, 1.0);
+                float rim = (1.0 - smoothstep(0.0, 1.6, -d)) * max(0.0, -n.y) * 0.3;
+                vec3 fill = mix(shape.rgb, vec3(1.0), rim) * (1.0 - 0.06 * max(0.0, n.y) * (1.0 - smoothstep(0.0, 6.0, -d)));
+
+                float lifted = field(p - vec2(0.0, 3.0)).w;
+                float shadow = (1.0 - smoothstep(-3.0, 9.0, lifted)) * uShadow * (1.0 - body);
+
+                float hover = clamp(0.5 - sdPill(p, uHover) / aa, 0.0, 1.0) * uHoverColor.a;
+
+                vec4 color = vec4(0.0, 0.0, 0.0, shadow);
+                color = vec4(uHoverColor.rgb * hover, hover) + color * (1.0 - hover);
+                color = vec4(fill * body, body) + color * (1.0 - body);
+                outColor = color;
+            }`;
+
+            const parse = value => {
+                const match = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(value).trim());
+                if (match) {
+                    const hex = match[1].length === 3 ? match[1].replace(/./g, digit => digit + digit) : match[1];
+                    return [0, 2, 4].map(idx => parseInt(hex.slice(idx, idx + 2), 16) / 255).concat(1);
+                }
+                const rgba = /rgba?\(([^)]+)\)/i.exec(String(value));
+                if (rgba) {
+                    const parts = rgba[1].split(',').map(part => parseFloat(part));
+                    return [parts[0] / 255, parts[1] / 255, parts[2] / 255, parts[3] ?? 1];
+                }
+                return [1, 1, 1, 1];
+            };
+
+            const clamp01 = value => Math.min(1, Math.max(0, value));
+
+            const travelEase = t => {
+                const x = clamp01(t);
+                return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+            };
+
+            const bezier = (a, b, c, d, t) => {
+                const u = 1 - t;
+                return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d;
+            };
+
+            const pillPath = (x, y, w, h) => {
+                if (w <= 0.5 || h <= 0.5) return '';
+                const r = Math.min(w, h) / 2;
+                return `M${x + r},${y}H${x + w - r}A${r},${r} 0 0 1 ${x + w},${y + r}V${y + h - r}A${r},${r} 0 0 1 ${x + w - r},${y + h}H${x + r}A${r},${r} 0 0 1 ${x},${y + h - r}V${y + r}A${r},${r} 0 0 1 ${x + r},${y}Z`;
+            };
+
+            const compile = (gl, type, source) => {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                return shader;
+            };
+
+            const UNIFORMS = [
+                'uSize', 'uRatio', 'uPills', 'uHover', 'uDrops',
+                'uTails', 'uTints', 'uCount', 'uSmooth', 'uPill',
+                'uHoverColor', 'uShadow'
+            ];
+
+            const buildPipeline = gl => {
+                const program = gl.createProgram();
+                gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX));
+                gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAGMENT));
+                gl.linkProgram(program);
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    gl.deleteProgram(program);
+                    return null;
+                }
+                const uniforms = Object.fromEntries(UNIFORMS.map(name => [name, gl.getUniformLocation(program, name)]));
+                const buffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+                return { program, uniforms, buffer, position: gl.getAttribLocation(program, 'aPosition') };
+            };
+
+            // Populate DOM items
+            const renderItemHTML = (item, index, interactive) => {
+                const iconHtml = item.icon ? `<span class="gooey-nav__icon">${item.icon}</span>` : '';
+                const labelHtml = item.label ? `<span class="gooey-nav__label">${item.label}</span>` : '';
+                const content = `${iconHtml}${labelHtml}`;
+                if (!interactive) {
+                    return `<li class="gooey-nav__item"><span class="gooey-nav__link">${content}</span></li>`;
+                }
+                const activeAttr = index === config.initialActiveIndex ? 'data-active=""' : '';
+                return `<li class="gooey-nav__item" data-gooey-index="${index}" ${activeAttr}>
+                    <a href="${item.href || '#'}" class="gooey-nav__link">
+                        ${content}
+                    </a>
+                </li>`;
+            };
+
+            list.innerHTML = items.map((it, idx) => renderItemHTML(it, idx, true)).join('');
+            overlay.innerHTML = items.map((it, idx) => renderItemHTML(it, idx, false)).join('');
+
+            // GL & Physics Engine
+            let current = config.initialActiveIndex;
+            const pillColor = config.color || '#fbbf24';
+            const pillRgb = parse(pillColor);
+            const settings = {
+                animationTime: config.animationTime,
+                particleCount: config.particleCount,
+                timeVariance: config.timeVariance,
+                spread: config.spread,
+                gooeyness: config.gooeyness,
+                wobble: config.wobble,
+                hoverEffect: config.hoverEffect,
+                pillRgb,
+                tints: config.colors.map(parse),
+                hoverRgb: parse('rgba(255, 255, 255, 0.08)'),
+                shadow: 0.4
+            };
+
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let gl = null;
+            try {
+                gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false });
+            } catch (err) {
+                gl = null;
+            }
+            const pipeline = gl ? buildPipeline(gl) : null;
+            fallback.style.display = pipeline ? 'none' : 'block';
+            canvas.style.display = pipeline ? 'block' : 'none';
+
+            const view = { width: 0, height: 0 };
+            let rects = [];
+            let target = -1;
+            const pills = new Map();
+            const drops = [];
+            const hover = { x: 0, y: 0, w: 0, h: 0, alpha: 0, index: -1 };
+            const pillData = new Float32Array(MAX_PILLS * 4);
+            const dropData = new Float32Array(MAX_DROPS * 4);
+            const tailData = new Float32Array(MAX_DROPS * 2);
+            const tintData = new Float32Array(MAX_DROPS * 3);
+            let raf = 0;
+            let last = 0;
+
+            const measure = () => {
+                const box = stage.getBoundingClientRect();
+                const ratio = Math.min(window.devicePixelRatio || 1, 2);
+                view.width = box.width;
+                view.height = box.height;
+                const outerWidth = box.width + MARGIN * 2;
+                const outerHeight = box.height + MARGIN * 2;
+                Object.assign(canvas.style, {
+                    left: `${-MARGIN}px`,
+                    top: `${-MARGIN}px`,
+                    width: `${outerWidth}px`,
+                    height: `${outerHeight}px`
+                });
+                const width = Math.max(1, Math.round(outerWidth * ratio));
+                const height = Math.max(1, Math.round(outerHeight * ratio));
+                if (canvas.width !== width || canvas.height !== height) {
+                    canvas.width = width;
+                    canvas.height = height;
+                }
+                rects = Array.from(list.children).map(item => {
+                    const r = item.getBoundingClientRect();
+                    return { x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height };
+                });
+            };
+
+            const trace = (boxes, blobs, smooth) => {
+                const field = (x, y) => {
+                    let d = 1e5;
+                    const merge = val => {
+                        const h = clamp01(0.5 + (0.5 * (val - d)) / smooth);
+                        d = val + (d - val) * h - smooth * h * (1 - h);
+                    };
+                    for (const box of boxes) {
+                        const r = Math.min(box.hw, box.hh);
+                        const qx = Math.abs(x - box.cx) - box.hw + r;
+                        const qy = Math.abs(y - box.cy) - box.hh + r;
+                        merge(Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r);
+                    }
+                    for (const blob of blobs) {
+                        const px = x - blob.x;
+                        const py = y - blob.y;
+                        const bx = -blob.tx;
+                        const by = -blob.ty;
+                        const span = bx * bx + by * by;
+                        const h = span > 0.0001 ? clamp01((px * bx + py * by) / span) : 0;
+                        const val = Math.hypot(px - bx * h, py - by * h) - blob.r;
+                        if (val > d + smooth) continue;
+                        merge(val);
+                    }
+                    return d;
+                };
+                const step = 2;
+                const parts = [];
+                for (let y = 0; y < view.height; y += 1) {
+                    const cy = y + 0.5;
+                    let previous = field(0, cy);
+                    let start = previous < 0 ? 0 : null;
+                    for (let x = step; x <= view.width + step; x += step) {
+                        const val = field(Math.min(x, view.width), cy);
+                        if (previous < 0 !== val < 0) {
+                            const cross = x - step + (step * previous) / (previous - val);
+                            if (val < 0) start = cross;
+                            else if (start !== null) {
+                                parts.push(`M${start.toFixed(1)},${y}H${cross.toFixed(1)}V${y + 1}H${start.toFixed(1)}Z`);
+                                start = null;
+                            }
+                        }
+                        previous = val;
+                    }
+                    if (start !== null) parts.push(`M${start.toFixed(1)},${y}H${view.width}V${y + 1}H${start.toFixed(1)}Z`);
+                }
+                return parts.join('');
+            };
+
+            const pill = index => {
+                if (!pills.has(index)) pills.set(index, { mass: 0, scale: 0, velocity: 0, outgoing: 0 });
+                return pills.get(index);
+            };
+
+            const shape = (index, amount) => {
+                const rect = rects[index];
+                if (!rect || amount <= 0.002) return null;
+                const h = rect.h * Math.min(1.08, 0.42 + 0.58 * Math.sqrt(Math.max(0, amount)));
+                const w = Math.max(h, rect.w * Math.pow(Math.max(0, amount), 0.75));
+                return { x: rect.x + rect.w / 2 - w / 2, y: rect.y + rect.h / 2 - h / 2, w, h };
+            };
+
+            const plan = (drop, index, now, fresh) => {
+                const s = settings;
+                const rect = rects[index];
+                if (!rect) return;
+                const reach = Math.max(0, s.spread);
+                const ex = rect.x + rect.w / 2 + (Math.random() - 0.5) * rect.w * 0.45;
+                const ey = rect.y + rect.h / 2 + (Math.random() - 0.5) * rect.h * 0.2;
+                const base = Math.max(0.15, s.animationTime / 1000);
+                const variance = (Math.random() - 0.5) * (Math.max(0, s.timeVariance) / 1000);
+                const duration = Math.max(0.15, base * (0.62 + Math.random() * 0.32) + variance * 0.6);
+                const out = Math.random() * Math.PI * 2;
+                const into = Math.random() * Math.PI * 2;
+                const burst = reach * (0.7 + Math.random() * 0.6);
+                const swing = reach * (0.55 + Math.random() * 0.55);
+                const carry = Math.min(duration / 3, 0.12);
+                drop.index = index;
+                drop.start = now;
+                drop.duration = duration;
+                drop.path = [
+                    drop.x,
+                    drop.y,
+                    fresh ? drop.x + Math.cos(out) * burst * 1.6 : drop.x + drop.vx * carry,
+                    fresh ? drop.y + Math.sin(out) * burst * 1.6 : drop.y + drop.vy * carry,
+                    ex + Math.cos(into) * swing * 1.5,
+                    ey + Math.sin(into) * swing * 1.5,
+                    ex,
+                    ey
+                ];
+            };
+
+            const emit = (from, to, now) => {
+                const s = settings;
+                const source = pills.get(from);
+                const rect = rects[from];
+                if (!source || !rect || !rects[to]) return;
+                const available = source.mass - source.outgoing;
+                if (available <= 0.002) return;
+                const room = MAX_DROPS - drops.length;
+                const count = Math.min(room, Math.max(1, Math.round(Math.max(1, s.particleCount) * available)));
+                if (count <= 0) return;
+                const windowTime = Math.max(0.15, s.animationTime / 1000) * 0.16;
+                for (let i = 0; i < count; i++) {
+                    const mass = available / count;
+                    source.outgoing += mass;
+                    drops.push({
+                        x: rect.x + rect.w / 2 + (Math.random() - 0.5) * rect.w * 0.6,
+                        y: rect.y + rect.h / 2 + (Math.random() - 0.5) * rect.h * 0.3,
+                        vx: 0,
+                        vy: 0,
+                        mass,
+                        size: 0.8 + Math.random() * 0.4,
+                        given: 0,
+                        source: from,
+                        index: to,
+                        leave: now + Math.random() * windowTime * 1000,
+                        emerged: 0,
+                        absorbed: 0,
+                        state: 'waiting',
+                        tint: s.tints.length ? s.tints[Math.floor(Math.random() * s.tints.length)] : null
+                    });
+                }
+            };
+
+            const render = () => {
+                const s = settings;
+                const height = rects[target]?.h ?? rects[0]?.h ?? 36;
+                const smooth = height * (0.18 + 0.5 * clamp01(s.gooeyness));
+                const boxes = [];
+                const blobs = [];
+                for (const [idx, state] of pills) {
+                    const box = shape(idx, state.scale);
+                    if (box) boxes.push({ cx: box.x + box.w / 2, cy: box.y + box.h / 2, hw: box.w / 2, hh: box.h / 2 });
+                }
+                for (const drop of drops) {
+                    if (drop.state === 'waiting') continue;
+                    const radius = 0.26 * height * drop.size * Math.min(drop.emerged, 1 - drop.absorbed);
+                    if (radius <= 0.05) continue;
+                    const speed = Math.hypot(drop.vx, drop.vy);
+                    const length = Math.min(radius * 1.1, speed * 0.018);
+                    blobs.push({
+                        x: drop.x,
+                        y: drop.y,
+                        r: radius,
+                        tx: speed > 0.01 ? (drop.vx / speed) * length : 0,
+                        ty: speed > 0.01 ? (drop.vy / speed) * length : 0,
+                        tint: drop.tint
+                    });
+                }
+
+                const settledPill = boxes.length === 1 && !blobs.length;
+                if (settledPill) {
+                    const box = boxes[0];
+                    overlay.style.clipPath = `path('${pillPath(box.cx - box.hw, box.cy - box.hh, box.hw * 2, box.hh * 2)}')`;
+                } else {
+                    overlay.style.clipPath = `path('${trace(boxes, blobs, smooth) || 'M0,0Z'}')`;
+                }
+                overlay.style.visibility = 'visible';
+
+                if (!pipeline || !gl) {
+                    const box = shape(target, 1);
+                    if (box) {
+                        fallback.style.transform = `translate(${box.x.toFixed(2)}px, ${box.y.toFixed(2)}px)`;
+                        fallback.style.width = `${box.w}px`;
+                        fallback.style.height = `${box.h}px`;
+                    }
+                    fallback.style.opacity = box ? '1' : '0';
+                    return;
+                }
+
+                let slot = 0;
+                for (const box of boxes) {
+                    if (slot >= MAX_PILLS) break;
+                    pillData[slot * 4] = box.cx + MARGIN;
+                    pillData[slot * 4 + 1] = box.cy + MARGIN;
+                    pillData[slot * 4 + 2] = box.hw;
+                    pillData[slot * 4 + 3] = box.hh;
+                    slot += 1;
+                }
+                pillData.fill(0, slot * 4);
+                let count = 0;
+                for (const blob of blobs) {
+                    if (count >= MAX_DROPS) break;
+                    dropData[count * 4] = blob.x + MARGIN;
+                    dropData[count * 4 + 1] = blob.y + MARGIN;
+                    dropData[count * 4 + 2] = blob.r;
+                    dropData[count * 4 + 3] = 0;
+                    tailData[count * 2] = blob.tx;
+                    tailData[count * 2 + 1] = blob.ty;
+                    const tint = blob.tint || s.pillRgb;
+                    tintData[count * 3] = tint[0];
+                    tintData[count * 3 + 1] = tint[1];
+                    tintData[count * 3 + 2] = tint[2];
+                    count += 1;
+                }
+
+                const { program, uniforms, buffer, position } = pipeline;
+                gl.viewport(0, 0, canvas.width, canvas.height);
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.useProgram(program);
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                gl.enableVertexAttribArray(position);
+                gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+                gl.uniform2f(uniforms.uSize, view.width + MARGIN * 2, view.height + MARGIN * 2);
+                gl.uniform1f(uniforms.uRatio, canvas.width / Math.max(1, view.width + MARGIN * 2));
+                gl.uniform4fv(uniforms.uPills, pillData);
+                gl.uniform4f(uniforms.uHover, hover.x + MARGIN, hover.y + MARGIN, hover.w / 2, hover.h / 2);
+                gl.uniform4fv(uniforms.uDrops, dropData);
+                gl.uniform2fv(uniforms.uTails, tailData);
+                gl.uniform3fv(uniforms.uTints, tintData);
+                gl.uniform1i(uniforms.uCount, count);
+                gl.uniform1f(uniforms.uSmooth, smooth);
+                gl.uniform3f(uniforms.uPill, s.pillRgb[0], s.pillRgb[1], s.pillRgb[2]);
+                gl.uniform4f(uniforms.uHoverColor, s.hoverRgb[0], s.hoverRgb[1], s.hoverRgb[2], s.hoverRgb[3] * hover.alpha);
+                gl.uniform1f(uniforms.uShadow, s.shadow);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            };
+
+            const animateFrame = now => {
+                raf = 0;
+                const s = settings;
+                const dt = Math.min(0.05, (now - last) / 1000 || 0);
+                last = now;
+                const emergeTime = 0.09;
+                const absorbTime = 0.12;
+
+                for (let i = drops.length - 1; i >= 0; i--) {
+                    const drop = drops[i];
+                    if (drop.state === 'waiting') {
+                        if (now < drop.leave) continue;
+                        drop.state = 'flying';
+                        plan(drop, drop.index, now, true);
+                    }
+                    if (drop.state === 'flying') {
+                        drop.emerged = Math.min(1, drop.emerged + dt / emergeTime);
+                        const source = pills.get(drop.source);
+                        if (source && drop.given < drop.mass) {
+                            const step = Math.min(drop.mass * (dt / emergeTime), drop.mass - drop.given);
+                            source.mass = Math.max(0, source.mass - step);
+                            source.outgoing = Math.max(0, source.outgoing - step);
+                            drop.given += step;
+                        }
+                        const t = clamp01((now - drop.start) / 1000 / drop.duration);
+                        const eased = travelEase(t);
+                        const [x0, y0, x1, y1, x2, y2, x3, y3] = drop.path;
+                        const x = bezier(x0, x1, x2, x3, eased);
+                        const y = bezier(y0, y1, y2, y3, eased);
+                        if (dt > 0) {
+                            drop.vx = (x - drop.x) / dt;
+                            drop.vy = (y - drop.y) / dt;
+                        }
+                        drop.x = x;
+                        drop.y = y;
+                        if (t >= 1) drop.state = 'absorbing';
+                    }
+                    if (drop.state === 'absorbing') {
+                        const step = Math.min(1 - drop.absorbed, dt / absorbTime);
+                        drop.absorbed += step;
+                        drop.vx *= 0.8;
+                        drop.vy *= 0.8;
+                        const host = pill(drop.index);
+                        host.mass = Math.min(1, host.mass + drop.mass * step);
+                        if (drop.absorbed >= 1) drops.splice(i, 1);
+                    }
+                }
+
+                const zeta = reduced ? 1 : 1 - 0.72 * clamp01(s.wobble);
+                const omega = 26;
+                const steps = Math.max(1, Math.ceil(dt / (1 / 240)));
+                const h = dt / steps;
+                for (const [idx, state] of pills) {
+                    for (let n = 0; n < steps; n++) {
+                        state.velocity += (omega * omega * (state.mass - state.scale) - 2 * zeta * omega * state.velocity) * h;
+                        state.scale += state.velocity * h;
+                    }
+                    if (idx !== target && state.mass <= 0.002 && state.outgoing <= 0.002 && Math.abs(state.scale) < 0.004) {
+                        pills.delete(idx);
+                    }
+                }
+
+                if (hover.index >= 0 && rects[hover.index]) {
+                    const rect = rects[hover.index];
+                    const k = 1 - Math.exp(-dt / 0.06);
+                    hover.x += (rect.x + rect.w / 2 - hover.x) * k;
+                    hover.y += (rect.y + rect.h / 2 - hover.y) * k;
+                    hover.w += (rect.w - hover.w) * k;
+                    hover.h += (rect.h - hover.h) * k;
+                }
+                const hoverGoal = s.hoverEffect && hover.index >= 0 && hover.index !== target ? 1 : 0;
+                hover.alpha += (hoverGoal - hover.alpha) * (1 - Math.exp(-dt / 0.08));
+
+                render();
+
+                const host = pills.get(target);
+                const resting =
+                    drops.length === 0 &&
+                    pills.size === 1 &&
+                    host &&
+                    Math.abs(host.mass - host.scale) < 0.0008 &&
+                    Math.abs(host.velocity) < 0.004;
+                const hoverRect = rects[hover.index];
+                const hovering =
+                    Math.abs(hoverGoal - hover.alpha) > 0.003 ||
+                    (hoverRect && Math.abs(hoverRect.x + hoverRect.w / 2 - hover.x) + Math.abs(hoverRect.w - hover.w) > 0.1);
+                if (!resting || hovering) raf = requestAnimationFrame(animateFrame);
+                else {
+                    host.mass = 1;
+                    host.scale = 1;
+                    host.velocity = 0;
+                    hover.alpha = hoverGoal;
+                    render();
+                }
+            };
+
+            const wake = () => {
+                if (raf) return;
+                last = performance.now();
+                raf = requestAnimationFrame(animateFrame);
+            };
+
+            const settle = index => {
+                pills.clear();
+                drops.length = 0;
+                target = index;
+                const state = pill(index);
+                state.mass = 1;
+                state.scale = 1;
+                state.velocity = 0;
+                render();
+            };
+
+            const go = (index, animate) => {
+                if (index === target) return;
+                Array.from(list.children).forEach((li, i) => {
+                    if (i === index) li.setAttribute('data-active', '');
+                    else li.removeAttribute('data-active');
+                });
+                if (!rects[index] || !animate || reduced || target < 0) {
+                    settle(index);
+                    return;
+                }
+                const now = performance.now();
+                target = index;
+                pill(index);
+                for (const drop of drops) {
+                    drop.index = index;
+                    if (drop.state === 'flying') plan(drop, index, now, false);
+                    if (drop.state === 'absorbing') {
+                        drop.state = 'flying';
+                        drop.mass *= 1 - drop.absorbed;
+                        drop.absorbed = 0;
+                        plan(drop, index, now, false);
+                    }
+                }
+                for (const from of [...pills.keys()]) {
+                    if (from !== index) emit(from, index, now);
+                }
+                wake();
+            };
+
+            const onOver = event => {
+                const item = event.target.closest('[data-gooey-index]');
+                if (!item || !list.contains(item)) return;
+                const index = Number(item.dataset.gooeyIndex);
+                const rect = rects[index];
+                if (!rect) return;
+                if (hover.alpha < 0.01) {
+                    hover.x = rect.x + rect.w / 2;
+                    hover.y = rect.y + rect.h / 2;
+                    hover.w = rect.w;
+                    hover.h = rect.h;
+                }
+                hover.index = index;
+                wake();
+            };
+
+            const onLeave = () => {
+                hover.index = -1;
+                wake();
+            };
+
+            // Selection Handler
+            const select = (index, item) => {
+                current = index;
+                go(index, true);
+                if (item.href === '#home') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (item.href === '#content') {
+                    const el = document.getElementById('heroMainContent') || document.querySelector('.hero-paragraph');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else if (item.href === '#features') {
+                    const el = document.getElementById('featuresRow') || document.querySelector('.features-horizontal-row');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else if (item.href === '#preference') {
+                    const el = document.getElementById('contactFooter') || document.querySelector('.landing-footer');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else if (item.href && item.href !== '#' && !item.href.startsWith('javascript:')) {
+                    setTimeout(() => {
+                        window.location.href = item.href;
+                    }, 240);
+                }
+            };
+
+            list.addEventListener('click', event => {
+                const link = event.target.closest('.gooey-nav__link');
+                if (!link) return;
+                const itemLi = link.closest('[data-gooey-index]');
+                if (!itemLi) return;
+                const index = Number(itemLi.dataset.gooeyIndex);
+                const item = items[index];
+                event.preventDefault();
+                select(index, item);
+            });
+
+            list.addEventListener('pointerover', onOver);
+            list.addEventListener('pointerleave', onLeave);
+
+            const resizeObserver = new ResizeObserver(() => {
+                measure();
+                if (!drops.length) settle(target < 0 ? current : target);
+                else render();
+            });
+            resizeObserver.observe(stage);
+            resizeObserver.observe(list);
+
+            measure();
+            settle(current);
+            document.fonts?.ready?.then(() => {
+                measure();
+                if (!drops.length) settle(target);
+            });
+        })();
+    </script>
+</body>
+
+</html>

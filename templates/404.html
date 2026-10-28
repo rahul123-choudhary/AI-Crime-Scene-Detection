@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Case File Not Found — CSI Forensic AI</title>
+    <meta name="description" content="The requested forensic case file, evidence record, or sector could not be located in the CSI Forensic AI Command Center registry.">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-black: #07090e;
+            --primary-red: #ff2b42;
+            --accent-yellow: #fbbf24;
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-red: rgba(255, 43, 66, 0.35);
+            --text-white: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+            width: 100%;
+            background-color: var(--bg-black);
+            color: var(--text-white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Ambient Glowing Background */
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 50% 30%, rgba(255, 43, 66, 0.12) 0%, transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.06) 0%, transparent 50%),
+                #07090e;
+            z-index: 0;
+        }
+
+        /* Top Nav */
+        .top-nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 40px;
+            border-bottom: 1px solid var(--border-glass);
+            backdrop-filter: blur(12px);
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #ffffff;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .brand-logo:hover {
+            transform: scale(1.02);
+        }
+
+        .brand-shield {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-shield svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px rgba(255, 43, 66, 0.7));
+        }
+
+        .brand-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .brand-title span {
+            color: var(--accent-yellow);
+        }
+
+        /* 404 Hero Container */
+        .error-hero-container {
+            position: relative;
+            z-index: 10;
+            max-width: 720px;
+            margin: 60px auto;
+            padding: 48px 36px;
+            text-align: center;
+            background: rgba(14, 18, 26, 0.75);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 43, 66, 0.1);
+        }
+
+        .error-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 43, 66, 0.14);
+            border: 1px solid var(--border-red);
+            color: #ff4d61;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .error-code {
+            font-size: 96px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1;
+            background: linear-gradient(135deg, #ffffff 0%, #ff4d61 50%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            letter-spacing: -2px;
+        }
+
+        .error-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 14px;
+        }
+
+        .error-desc {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .buttons-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 28px;
+            background: linear-gradient(135deg, #ff2b42 0%, #d81b32 100%);
+            color: #ffffff;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-size: 14.5px;
+            font-weight: 700;
+            box-shadow: 0 0 20px rgba(255, 43, 66, 0.45);
+            transition: all 0.25s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(255, 43, 66, 0.7);
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 26px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            color: #ffffff;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-size: 14.5px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Forensic Footer */
+        .footer-bar {
+            position: relative;
+            z-index: 10;
+            border-top: 1px solid var(--border-glass);
+            padding: 24px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+            background: rgba(9, 12, 18, 0.85);
+            backdrop-filter: blur(12px);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-contacts {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .contact-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s ease;
+        }
+
+        .contact-link:hover {
+            color: #ffffff;
+        }
+
+        .contact-link i {
+            color: var(--accent-yellow);
+        }
+
+        @media (max-width: 600px) {
+            .top-nav {
+                padding: 16px 20px;
+            }
+            .error-hero-container {
+                margin: 30px 16px;
+                padding: 32px 20px;
+            }
+            .error-code {
+                font-size: 72px;
+            }
+            .error-title {
+                font-size: 20px;
+            }
+            .footer-bar {
+                padding: 20px;
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"></div>
+
+    <!-- Header Navigation -->
+    <header class="top-nav">
+        <a href="{{ url_for('web.dashboard') }}" class="brand-logo" title="Back to Command Center">
+            <div class="brand-shield">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 5 L88 22 V52 C88 74 50 95 50 95 C50 95 12 74 12 52 V22 Z" fill="#121620" stroke="#ff2b42" stroke-width="5" />
+                    <circle cx="50" cy="48" r="22" stroke="#ff2b42" stroke-width="4" stroke-dasharray="8 4" />
+                    <line x1="50" y1="20" x2="50" y2="76" stroke="#fbbf24" stroke-width="3" />
+                    <line x1="22" y1="48" x2="78" y2="48" stroke="#fbbf24" stroke-width="3" />
+                    <circle cx="50" cy="48" r="5" fill="#ff2b42" />
+                </svg>
+            </div>
+            <div class="brand-title">CSI Forensic <span>AI</span></div>
+        </a>
+
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <a href="tel:+18005552746" class="contact-link" title="Emergency Forensic Dispatch Hotline">
+                <i class="fa-solid fa-phone"></i> +1 (800) 555-CRIME
+            </a>
+        </div>
+    </header>
+
+    <!-- 404 Main Message Container -->
+    <main class="error-hero-container">
+        <div class="error-badge-pill">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Registry Status 404</span>
+        </div>
+
+        <div class="error-code">404</div>
+        <h1 class="error-title">Case File or Sector Not Found</h1>
+        <p class="error-desc">
+            The requested crime scene record, evidence catalog, or neural processing route does not exist or has been archived under sealed classification.
+        </p>
+
+        <div class="buttons-row">
+            <a href="{{ url_for('web.dashboard') }}" class="btn-primary">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Command Center Dashboard</span>
+            </a>
+            <a href="{{ url_for('web.cases_archive') }}" class="btn-outline">
+                <i class="fa-solid fa-folder-open"></i>
+                <span>Search Case Registry</span>
+            </a>
+        </div>
+    </main>
+
+    <!-- Footer Bar -->
+    <footer class="footer-bar">
+        <div>
+            &copy; 2026 CSI Forensic AI Intelligence Systems. All Rights Reserved.
+        </div>
+        <div class="footer-contacts">
+            <a href="tel:+18005552746" class="contact-link">
+                <i class="fa-solid fa-phone"></i> +1 (800) 555-CRIME
+            </a>
+            <a href="mailto:dispatch@csi-forensic.ai" class="contact-link">
+                <i class="fa-solid fa-envelope"></i> dispatch@csi-forensic.ai
+            </a>
+            <a href="{{ url_for('web.dashboard') }}?tab=alerts" class="contact-link">
+                <i class="fa-solid fa-bell"></i> Alerts & Logs
+            </a>
+        </div>
+    </footer>
+</body>
+</html>

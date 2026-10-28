@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Large Datasets & Training Runs (> 40 GB)
+Datasets/
+crimeSceneDataset/
+runs/
+*.log
+
+# Root downloaded model weights (trained models are preserved in models/ directory)
+yolov8m.pt
+yolov8n.pt
+yolo11n.pt
+
+# Large CCTV video footage samples (> 20 MB each)
+static/samples/cctv_*.mp4
+
+# Runtime generated uploads, crops, results, and investigation PDFs
+static/uploads/*
+!static/uploads/.gitkeep
+static/crops/*
+!static/crops/.gitkeep
+static/results/*
+!static/results/.gitkeep
+reports/*.pdf
+!reports/.gitkeep
+
+# Runtime databases & backups
+*.db
+database/**/*.db
+
+# Temporary scratch scripts, helper scripts, & IDE files
+scratch/
+scripts_helper/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets & API credentials
+firebase_credentials.json

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Case Registry & Chain of Custody · AI Crime Scene Detector{% endblock %}
+
+{% block content %}
+<section class="hero-header" style="margin-bottom: 1.5rem;">
+    <div class="hero-eyebrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        Evidence Vault & Archival Records
+    </div>
+    <h1 class="hero-title">Forensic Case Registry</h1>
+    <p class="hero-desc">
+        Browse indexed crime-scene investigations, review threat levels, and retrieve official chain-of-custody PDF documentation.
+    </p>
+</section>
+
+<!-- Filter & Search HUD -->
+<section class="workspace-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <form method="get" action="{{ url_for('web.cases_archive') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div style="flex: 2; min-width: 260px;">
+            <label class="form-label" for="q">Search Case File</label>
+            <input type="text" id="q" name="q" value="{{ query }}" class="form-control" placeholder="Search by Case ID, Officer, or Location...">
+        </div>
+
+        <div style="flex: 1; min-width: 180px;">
+            <label class="form-label" for="threat">Threat Assessment</label>
+            <select id="threat" name="threat" class="form-select">
+                <option value="" {% if not threat %}selected{% endif %}>All Threat Levels</option>
+                <option value="CRITICAL" {% if threat == 'CRITICAL' %}selected{% endif %}>CRITICAL Only</option>
+                <option value="HIGH" {% if threat == 'HIGH' %}selected{% endif %}>HIGH Only</option>
+                <option value="MEDIUM" {% if threat == 'MEDIUM' %}selected{% endif %}>MEDIUM Only</option>
+                <option value="LOW" {% if threat == 'LOW' %}selected{% endif %}>LOW Only</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-primary" style="margin-top: 0; width: auto; padding: 10px 24px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            Filter Records
+        </button>
+
+        {% if query or threat %}
+        <a href="{{ url_for('web.cases_archive') }}" class="btn-secondary" style="height: 42px;">Reset</a>
+        {% endif %}
+    </form>
+</section>
+
+<!-- Cases Table -->
+<section class="table-card" style="margin-top: 0;">
+    <div class="table-header">
+        <h2 style="font-size: 1.15rem; font-weight: 700;">Archived Investigations ({{ cases|length }})</h2>
+        <a href="{{ url_for('web.index') }}" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;">+ New Investigation</a>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="forensic-table">
+            <thead>
+                <tr>
+                    <th>Case Reference</th>
+                    <th>Incident / Title</th>
+                    <th>Investigator</th>
+                    <th>Location</th>
+                    <th>Threat Level</th>
+                    <th>Evidence Items</th>
+                    <th>Recorded Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in cases %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('web.case_result', case_id=c.case_id) }}" style="color: var(--accent-cyan); font-family: var(--font-mono); font-weight: 700; text-decoration: none;">
+                            {{ c.case_id }}
+                        </a>
+                    </td>
+                    <td><strong style="color: var(--text-primary);">{{ c.title }}</strong></td>
+                    <td style="color: var(--text-secondary);">{{ c.investigator }}</td>
+                    <td style="color: var(--text-muted);">{{ c.location }}</td>
+                    <td><span class="badge-threat {{ c.threat_level|lower }}">{{ c.threat_level }}</span></td>
+                    <td style="font-family: var(--font-mono); font-weight: 700;">{{ c.evidence_count }} items</td>
+                    <td style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);">{{ c.created_at[:10] }}</td>
+                    <td>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <a href="{{ url_for('web.case_result', case_id=c.case_id) }}" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;">Inspect</a>
+                            <a href="{{ url_for('web.download_pdf', case_id=c.case_id) }}" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;">PDF</a>
+                            <form action="{{ url_for('web.remove_case', case_id=c.case_id) }}" method="post" onsubmit="return confirm('Archive this case record?');" style="display: inline;">
+                                <button type="submit" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 6px;" title="Archive Case">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 3rem;">
+                        No cases found matching your criteria. Start a new analysis from the Intake Hub.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

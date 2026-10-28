@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Enterprise REST API Documentation · AI Crime Scene Detector{% endblock %}
+
+{% block content %}
+<section class="hero-header">
+    <div class="hero-eyebrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+        Automated Computer Vision Interface
+    </div>
+    <h1 class="hero-title">Forensic REST API (v1)</h1>
+    <p class="hero-desc">
+        Integrate automated crime-scene evidence detection into police CAD (Computer-Aided Dispatch), RMS (Records Management Systems), or field drones.
+    </p>
+</section>
+
+<!-- Interactive Health Tester -->
+<section class="workspace-card" style="padding: 1.8rem; margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h2 style="font-size: 1.15rem; font-weight: 700;">Live Endpoint Sandbox: GET /api/v1/health</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Query neural engine readiness, active models, and CUDA acceleration.</p>
+        </div>
+        <button type="button" id="btnTestHealth" class="btn-primary" style="margin-top: 0; width: auto; padding: 8px 18px; font-size: 0.85rem;">
+            Test Health Endpoint
+        </button>
+    </div>
+
+    <pre id="healthResponse" style="background: #03070d; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1rem; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; overflow-x: auto; max-height: 240px;">
+Click "Test Health Endpoint" to dispatch request...
+    </pre>
+</section>
+
+<!-- API Endpoint Cards -->
+<section style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- POST /api/v1/detect -->
+    <article class="workspace-card" style="padding: 1.8rem;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <span style="background: #0284c7; color: #fff; font-family: var(--font-mono); font-weight: 800; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">POST</span>
+            <code style="font-family: var(--font-mono); font-size: 1rem; color: var(--text-primary);">/api/v1/detect</code>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">· Analyze photograph payload</span>
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Accepts a multipart/form-data upload containing an image, runs inference through the requested model(s), saves crops, and returns detected evidence items with bounding box coordinates and threat severity.
+        </p>
+
+        <h4 style="font-size: 0.82rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 6px;">Payload Parameters</h4>
+        <ul style="list-style: disc; margin-left: 1.5rem; font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            <li><code>image</code> (File, Required): JPG, PNG, or WEBP binary data.</li>
+            <li><code>model</code> (String, Optional): <code>ensemble</code> (default), <code>weapon</code>, or <code>forensic</code>.</li>
+            <li><code>confidence</code> (Float, Optional): Threshold between 0.10 and 0.90 (default: 0.25).</li>
+        </ul>
+
+        <h4 style="font-size: 0.82rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 6px;">cURL Example</h4>
+        <pre style="background: #03070d; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1rem; font-family: var(--font-mono); font-size: 0.8rem; color: #f8fafc; overflow-x: auto;">
+curl -X POST http://127.0.0.1:5000/api/v1/detect \
+  -F "image=@crime.jpg" \
+  -F "model=ensemble" \
+  -F "confidence=0.25"
+        </pre>
+    </article>
+
+    <!-- GET /api/v1/cases -->
+    <article class="workspace-card" style="padding: 1.8rem;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <span style="background: #10b981; color: #04140e; font-family: var(--font-mono); font-weight: 800; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">GET</span>
+            <code style="font-family: var(--font-mono); font-size: 1rem; color: var(--text-primary);">/api/v1/cases</code>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">· List indexed forensic cases</span>
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Query all archived crime scene investigations with optional text search and threat filter.
+        </p>
+
+        <h4 style="font-size: 0.82rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 6px;">Query Parameters</h4>
+        <ul style="list-style: disc; margin-left: 1.5rem; font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            <li><code>q</code> (String, Optional): Search keyword for title, location, or investigator.</li>
+            <li><code>threat</code> (String, Optional): <code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, or <code>LOW</code>.</li>
+            <li><code>limit</code> (Integer, Optional): Default 20.</li>
+        </ul>
+    </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('btnTestHealth').addEventListener('click', async () => {
+    const box = document.getElementById('healthResponse');
+    box.textContent = 'Dispatching request to /api/v1/health...';
+    try {
+        const res = await fetch('/api/v1/health');
+        const data = await res.json();
+        box.textContent = JSON.stringify(data, null, 2);
+    } catch (err) {
+        box.textContent = 'Error contacting API: ' + err.message;
+    }
+});
+</script>
+{% endblock %}
