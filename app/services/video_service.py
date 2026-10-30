@@ -21,7 +21,11 @@ from app.config import (
     WEAPON_MODEL_PATH,
     get_evidence_metadata,
 )
-from app.services.analyzer import assess_crime_scene_threat
+from app.services.analyzer import (
+    assess_crime_scene_threat,
+    generate_scene_narrative,
+    infer_evidence_activity,
+)
 from app.services.detector import (
     draw_forensic_annotations,
     load_yolo_model,
@@ -282,6 +286,18 @@ def process_crime_scene_video(
     # Assess overall peak threat
     threat_level, threat_score, category_counts = assess_crime_scene_threat(all_seen_detections)
 
+    # Enrich timeline items with inferred activity
+    total_persons = sum(1 for it in unique_timeline if "person" in it.get("class", "").lower())
+    p_idx = 0
+    for ev in unique_timeline:
+        if "person" in ev.get("class", "").lower():
+            ev["activity"] = infer_evidence_activity(ev, unique_timeline, height, width, p_idx, total_persons)
+            p_idx += 1
+        else:
+            ev["activity"] = infer_evidence_activity(ev, unique_timeline, height, width)
+
+    scene_narrative = generate_scene_narrative(unique_timeline, threat_level, threat_score)
+
     return {
         "case_id": case_id,
         "video_duration": duration_sec,
@@ -292,6 +308,7 @@ def process_crime_scene_video(
         "threat_level": threat_level,
         "threat_score": threat_score,
         "category_counts": category_counts,
+        "scene_narrative": scene_narrative,
         "timeline_events": unique_timeline[:40],  # top timeline markers
         "evidence_items": unique_timeline[:40],
     }

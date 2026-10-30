@@ -176,6 +176,11 @@ def init_db() -> None:
         evidence_cols = [r["name"] for r in conn.execute("PRAGMA table_info(evidence_items)").fetchall()]
         if "video_timestamp" not in evidence_cols:
             conn.execute("ALTER TABLE evidence_items ADD COLUMN video_timestamp REAL DEFAULT 0.0")
+        if "activity" not in evidence_cols:
+            conn.execute("ALTER TABLE evidence_items ADD COLUMN activity TEXT DEFAULT ''")
+
+        if "scene_narrative" not in cases_cols:
+            conn.execute("ALTER TABLE cases ADD COLUMN scene_narrative TEXT DEFAULT ''")
 
         # Migration: ensure users table has email verification & password reset columns
         users_cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
@@ -219,9 +224,10 @@ def insert_case(
             INSERT INTO cases (
                 case_id, title, investigator, department, location,
                 incident_type, notes, threat_level, threat_score,
+                scene_narrative,
                 model_used, image_path, annotated_path, media_type,
                 video_duration, clarity_score, enhanced_path, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 case_data["case_id"],
@@ -233,6 +239,7 @@ def insert_case(
                 case_data.get("notes", ""),
                 case_data.get("threat_level", "LOW"),
                 case_data.get("threat_score", 0),
+                case_data.get("scene_narrative", ""),
                 case_data.get("model_used", "Ensemble"),
                 case_data["image_path"],
                 case_data["annotated_path"],
@@ -250,8 +257,9 @@ def insert_case(
                 """
                 INSERT INTO evidence_items (
                     case_id, class_name, category, severity, confidence,
+                    activity,
                     bbox_x1, bbox_y1, bbox_x2, bbox_y2, crop_path, video_timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     case_data["case_id"],
@@ -259,6 +267,7 @@ def insert_case(
                     item.get("category", "General Evidence"),
                     item.get("severity", "LOW"),
                     float(item["confidence"]),
+                    item.get("activity", ""),
                     float(bbox[0]) if len(bbox) > 0 else 0.0,
                     float(bbox[1]) if len(bbox) > 1 else 0.0,
                     float(bbox[2]) if len(bbox) > 2 else 0.0,
@@ -294,6 +303,7 @@ def insert_case(
                         "category": item.get("category", "General Evidence"),
                         "severity": item.get("severity", "LOW"),
                         "confidence": float(item.get("confidence", 0.0)),
+                        "activity": item.get("activity", ""),
                         "bbox": [float(c) for c in bbox] if bbox else [],
                         "crop_path": item.get("crop_path", ""),
                         "video_timestamp": float(item.get("video_timestamp", 0.0)),
@@ -311,6 +321,7 @@ def insert_case(
                 "notes": case_data.get("notes", ""),
                 "threat_level": case_data.get("threat_level", "LOW"),
                 "threat_score": int(case_data.get("threat_score", 0)),
+                "scene_narrative": case_data.get("scene_narrative", ""),
                 "model_used": case_data.get("model_used", "Ensemble"),
                 "image_path": case_data["image_path"],
                 "annotated_path": case_data["annotated_path"],
