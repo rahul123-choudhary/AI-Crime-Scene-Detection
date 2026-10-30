@@ -35,16 +35,17 @@ def run_yolo_on_frame(
     model_choice: str = "ensemble",
     confidence: float = DEFAULT_CONFIDENCE,
 ) -> list[dict[str, Any]]:
-    """Run model inference directly on an in-memory NumPy frame with dynamic resolution."""
+    """Run model inference directly on an in-memory NumPy frame with accurate multi-model ensemble."""
     h, w = frame.shape[:2]
-    optimal_imgsz = min(1280, max(640, int((max(h, w) + 31) // 32) * 32))
+    total_area = float(h * w)
     all_results: list[list[dict[str, Any]]] = []
 
     model_choice = model_choice.lower().strip()
 
+    # 1. Specialized Weapons Detector
     if model_choice in ("weapon", "ensemble") and WEAPON_MODEL_PATH.is_file():
         weapon_model = load_yolo_model(str(WEAPON_MODEL_PATH))
-        res = weapon_model.predict(frame, conf=confidence, imgsz=optimal_imgsz, save=False, verbose=False)[0]
+        res = weapon_model.predict(frame, conf=confidence, imgsz=640, augment=False, save=False, verbose=False)[0]
         dets: list[dict[str, Any]] = []
         for box in res.boxes:
             cls_name = str(res.names[int(box.cls[0])])
@@ -64,16 +65,56 @@ def run_yolo_on_frame(
                     "source_model": "Weapon Detector",
                 }
             )
-        all_results.append(dets)
+        if dets:
+            all_results.append(dets)
 
+    # 2. General Scene, Suspects & Persons (YOLO11)
+    if model_choice in ("weapon", "ensemble") and GENERAL_MODEL_PATH.is_file():
+        allowed_coco = {
+            "person", "knife", "scissors", "baseball bat", "backpack",
+            "handbag", "suitcase", "cell phone", "laptop", "car",
+            "motorcycle", "truck", "bottle"
+        }
+        gen_model = load_yolo_model(str(GENERAL_MODEL_PATH))
+        res = gen_model.predict(frame, conf=max(0.30, confidence), imgsz=640, augment=False, save=False, verbose=False)[0]
+        gen_dets: list[dict[str, Any]] = []
+        for box in res.boxes:
+            cls_name = str(res.names[int(box.cls[0])])
+            if cls_name not in allowed_coco:
+                continue
+            conf_val = round(float(box.conf[0]) * 100, 1)
+            xyxy = [float(v) for v in box.xyxy[0].tolist()]
+            gen_dets.append(
+                {
+                    "class": cls_name,
+                    "confidence": conf_val,
+                    "box": [round(c, 1) for c in xyxy],
+                    "norm_box": [
+                        round(xyxy[0] / w, 4),
+                        round(xyxy[1] / h, 4),
+                        round(xyxy[2] / w, 4),
+                        round(xyxy[3] / h, 4),
+                    ],
+                    "source_model": "Scene & Subjects (YOLO11)",
+                }
+            )
+        if gen_dets:
+            all_results.append(gen_dets)
+
+    # 3. Forensic Traces (filtering out corrupted Human-hair)
     if model_choice in ("forensic", "ensemble") and FORENSIC_MODEL_PATH.is_file():
         forensic_model = load_yolo_model(str(FORENSIC_MODEL_PATH))
-        res = forensic_model.predict(frame, conf=confidence, imgsz=optimal_imgsz, save=False, verbose=False)[0]
+        res = forensic_model.predict(frame, conf=confidence, imgsz=640, augment=False, save=False, verbose=False)[0]
         dets = []
         for box in res.boxes:
             cls_name = str(res.names[int(box.cls[0])])
-            conf_val = round(float(box.conf[0]) * 100, 1)
+            if cls_name == "Human-hair":
+                continue
             xyxy = [float(v) for v in box.xyxy[0].tolist()]
+            box_area = (xyxy[2] - xyxy[0]) * (xyxy[3] - xyxy[1])
+            if cls_name in ("Finger-print", "Shoe-print", "Glass") and total_area > 0 and (box_area / total_area) > 0.20:
+                continue
+            conf_val = round(float(box.conf[0]) * 100, 1)
             dets.append(
                 {
                     "class": cls_name,
@@ -88,31 +129,8 @@ def run_yolo_on_frame(
                     "source_model": "Forensic Trace",
                 }
             )
-        all_results.append(dets)
-
-    if not all_results and GENERAL_MODEL_PATH.is_file():
-        gen_model = load_yolo_model(str(GENERAL_MODEL_PATH))
-        res = gen_model.predict(frame, conf=confidence, imgsz=optimal_imgsz, save=False, verbose=False)[0]
-        dets = []
-        for box in res.boxes:
-            cls_name = str(res.names[int(box.cls[0])])
-            conf_val = round(float(box.conf[0]) * 100, 1)
-            xyxy = [float(v) for v in box.xyxy[0].tolist()]
-            dets.append(
-                {
-                    "class": cls_name,
-                    "confidence": conf_val,
-                    "box": [round(c, 1) for c in xyxy],
-                    "norm_box": [
-                        round(xyxy[0] / w, 4),
-                        round(xyxy[1] / h, 4),
-                        round(xyxy[2] / w, 4),
-                        round(xyxy[3] / h, 4),
-                    ],
-                    "source_model": "YOLO11 General",
-                }
-            )
-        all_results.append(dets)
+        if dets:
+            all_results.append(dets)
 
     if len(all_results) > 1:
         merged = merge_ensemble_detections(all_results, iou_threshold=DEFAULT_IOU)

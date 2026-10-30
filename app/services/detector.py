@@ -1,9 +1,8 @@
-"""Multi-model YOLO inference service for crime-scene evidence detection."""
+"""Core forensic detection service using YOLO models and ensemble post-processing."""
 
 from __future__ import annotations
 
 import time
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -19,14 +18,22 @@ from app.config import (
     WEAPON_MODEL_PATH,
 )
 
+# Global model cache to avoid reloading weights on each request
+_LOADED_MODELS: dict[str, YOLO] = {}
 
-@lru_cache(maxsize=4)
-def load_yolo_model(model_path_str: str) -> YOLO:
-    """Cache YOLO models in memory to avoid reloading checkpoints on every request."""
-    path = Path(model_path_str)
-    if not path.is_file():
-        raise FileNotFoundError(f"Model checkpoint not found: {path}")
-    return YOLO(str(path))
+# Forensically relevant classes from General YOLO11
+FORENSIC_ALLOWED_COCO = {
+    "person", "knife", "scissors", "baseball bat", "backpack",
+    "handbag", "suitcase", "cell phone", "laptop", "car",
+    "motorcycle", "truck", "bottle"
+}
+
+
+def load_yolo_model(model_path: str) -> YOLO:
+    """Load a YOLO model checkpoint with memoization."""
+    if model_path not in _LOADED_MODELS:
+        _LOADED_MODELS[model_path] = YOLO(model_path)
+    return _LOADED_MODELS[model_path]
 
 
 def calculate_iou(box_a: list[float], box_b: list[float]) -> float:
@@ -154,30 +161,48 @@ def run_yolo_on_image(
     image_input: Path | str | np.ndarray,
     confidence: float,
     model_name: str,
-    imgsz: int | None = None,
-    augment: bool = True,
+    imgsz: int = 640,
+    augment: bool = False,
+    is_general_model: bool = False,
 ) -> list[dict[str, Any]]:
-    """Execute prediction on a single YOLO model and format detections with optimal resolution and TTA."""
+    """Execute prediction on a single YOLO model with strict sanity checks and accurate localization."""
     predict_kwargs: dict[str, Any] = {
         "conf": confidence,
         "save": False,
         "verbose": False,
         "augment": augment,
+        "imgsz": imgsz,
     }
-    if imgsz is not None:
-        predict_kwargs["imgsz"] = imgsz
 
     source = image_input if isinstance(image_input, np.ndarray) else str(image_input)
     results = model.predict(source, **predict_kwargs)[0]
     names = results.names
     h, w = results.orig_shape
+    total_area = float(h * w)
 
     detections: list[dict[str, Any]] = []
     for box in results.boxes:
         cls_id = int(box.cls[0])
         cls_name = str(names[cls_id])
+
+        # Filter general model to relevant forensic items only
+        if is_general_model and cls_name not in FORENSIC_ALLOWED_COCO:
+            continue
+
+        # Suppress corrupted Human-hair class from legacy 10-class checkpoint
+        if cls_name == "Human-hair" and "Forensic" in model_name:
+            continue
+
         conf_val = round(float(box.conf[0]) * 100, 1)
         xyxy = [float(v) for v in box.xyxy[0].tolist()]
+        box_w = max(0.0, xyxy[2] - xyxy[0])
+        box_h = max(0.0, xyxy[3] - xyxy[1])
+        box_area = box_w * box_h
+
+        # Latent trace sanity check: a micro-trace cannot occupy >20% of an entire crime scene image
+        if cls_name in ("Finger-print", "Shoe-print", "Glass") and total_area > 0:
+            if (box_area / total_area) > 0.20:
+                continue
 
         # Normalized coordinates (0-1) for client canvas rendering
         norm_box = [
@@ -205,14 +230,13 @@ def detect_evidence(
     model_choice: str = "ensemble",
     confidence: float = DEFAULT_CONFIDENCE,
     iou_thresh: float = DEFAULT_IOU,
-    enable_multi_pass: bool = True,
+    enable_multi_pass: bool = False,
 ) -> dict[str, Any]:
     """
     Main detection pipeline supporting:
-    - 'weapon': High precision weapon detection model
-    - 'forensic': 10-class forensic trace & body model
-    - 'ensemble': Fuses weapons & forensic models for comprehensive scene analysis
-    - Multi-scale TTA & CLAHE enhancement fusion for high precision.
+    - 'weapon': High precision weapon detection model (Weapons Specialist)
+    - 'forensic': 10-class forensic trace & body model (excluding corrupted classes)
+    - 'ensemble': Accurate fusion of Weapons, Forensic Traces, and Subjects/Persons of interest
     """
     if not image_path.is_file():
         raise FileNotFoundError(f"Target image not found: {image_path}")
@@ -223,74 +247,55 @@ def detect_evidence(
         raise ValueError(f"Could not decode image at {image_path}")
 
     h, w = raw_img.shape[:2]
-    # Optimal high-resolution inference dimension (preserves fine trace evidence without loss)
-    max_dim = max(h, w)
-    optimal_imgsz = min(1280, max(640, int((max_dim + 31) // 32) * 32))
-
     all_results: list[list[dict[str, Any]]] = []
     models_executed: list[str] = []
 
     model_choice = model_choice.lower().strip()
 
-    # Pre-generate enhanced pass (CLAHE contrast normalization) for low-contrast/blurry regions
-    enhanced_img: np.ndarray | None = None
-    if enable_multi_pass:
-        try:
-            lab = cv2.cvtColor(raw_img, cv2.COLOR_BGR2LAB)
-            l_channel, a_channel, b_channel = cv2.split(lab)
-            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-            cl = clahe.apply(l_channel)
-            enhanced_img = cv2.cvtColor(cv2.merge((cl, a_channel, b_channel)), cv2.COLOR_LAB2BGR)
-        except Exception:
-            enhanced_img = None
-
+    # 1. Specialized Weapons Detector (Firearms, Handguns, Knives, Munitions)
     if model_choice in ("weapon", "ensemble"):
         if WEAPON_MODEL_PATH.is_file():
             weapon_model = load_yolo_model(str(WEAPON_MODEL_PATH))
             weapon_dets = run_yolo_on_image(
-                weapon_model, raw_img, confidence, "Weapons Specialist", imgsz=optimal_imgsz, augment=True
+                weapon_model, raw_img, confidence, "Weapons Specialist", imgsz=640, augment=False
             )
-            all_results.append(weapon_dets)
-
-            # Enhanced pass for faint/shadowed weapons
-            if enhanced_img is not None:
-                enh_w_dets = run_yolo_on_image(
-                    weapon_model, enhanced_img, confidence, "Weapons Specialist (Enhanced)", imgsz=optimal_imgsz, augment=True
-                )
-                if enh_w_dets:
-                    all_results.append(enh_w_dets)
-
+            if weapon_dets:
+                all_results.append(weapon_dets)
             models_executed.append("Weapon Detector (6-Class)")
 
+    # 2. General Scene, Suspects & Persons of Interest (YOLO11)
+    if model_choice in ("weapon", "ensemble"):
+        if GENERAL_MODEL_PATH.is_file():
+            gen_model = load_yolo_model(str(GENERAL_MODEL_PATH))
+            gen_dets = run_yolo_on_image(
+                gen_model, raw_img, max(0.30, confidence), "Scene & Subjects (YOLO11)", imgsz=640, augment=False, is_general_model=True
+            )
+            if gen_dets:
+                all_results.append(gen_dets)
+            models_executed.append("Scene & Subjects (YOLO11)")
+
+    # 3. Specialized Forensic Traces (Fingerprints, Shoeprints, Rope, Hammer, Body)
     if model_choice in ("forensic", "ensemble"):
         if FORENSIC_MODEL_PATH.is_file():
             forensic_model = load_yolo_model(str(FORENSIC_MODEL_PATH))
             forensic_dets = run_yolo_on_image(
-                forensic_model, raw_img, confidence, "Forensic Evidence", imgsz=optimal_imgsz, augment=True
+                forensic_model, raw_img, confidence, "Forensic Trace", imgsz=640, augment=False
             )
-            all_results.append(forensic_dets)
-
-            # Enhanced pass for latent/trace evidence
-            if enhanced_img is not None:
-                enh_f_dets = run_yolo_on_image(
-                    forensic_model, enhanced_img, confidence, "Forensic Evidence (Enhanced)", imgsz=optimal_imgsz, augment=True
-                )
-                if enh_f_dets:
-                    all_results.append(enh_f_dets)
-
+            if forensic_dets:
+                all_results.append(forensic_dets)
             models_executed.append("Forensic Trace (10-Class)")
 
-    # Fallback to general YOLO if no models were loaded
-    if not all_results:
-        if GENERAL_MODEL_PATH.is_file():
-            general_model = load_yolo_model(str(GENERAL_MODEL_PATH))
-            gen_dets = run_yolo_on_image(
-                general_model, raw_img, confidence, "General YOLO11", imgsz=optimal_imgsz, augment=True
-            )
+    # Fallback to general YOLO if no specialized models are present
+    if not all_results and GENERAL_MODEL_PATH.is_file():
+        gen_model = load_yolo_model(str(GENERAL_MODEL_PATH))
+        gen_dets = run_yolo_on_image(
+            gen_model, raw_img, confidence, "General YOLO11", imgsz=640, augment=False
+        )
+        if gen_dets:
             all_results.append(gen_dets)
-            models_executed.append("YOLO11 General")
+        models_executed.append("YOLO11 General")
 
-    # Merge detections
+    # Merge detections with Non-Maximum Suppression
     if len(all_results) > 1:
         merged_detections = merge_ensemble_detections(all_results, iou_threshold=iou_thresh)
     elif len(all_results) == 1:
