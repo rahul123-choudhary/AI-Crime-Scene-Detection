@@ -48,6 +48,8 @@ def is_firebase_configured() -> bool:
 
 # Supabase Cloud Configuration
 _raw_supa_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+if "/rest/v1" in _raw_supa_url:
+    _raw_supa_url = _raw_supa_url.split("/rest/v1")[0].rstrip("/")
 if _raw_supa_url and not _raw_supa_url.startswith("http"):
     SUPABASE_URL = f"https://{_raw_supa_url}.supabase.co"
 else:
@@ -58,6 +60,7 @@ SUPABASE_KEY = (
     or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     or os.getenv("SUPABASE_ANON_KEY", "")
 ).strip()
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 
 
 def is_supabase_configured() -> bool:

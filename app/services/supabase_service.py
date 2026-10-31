@@ -12,7 +12,12 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from app.config import SUPABASE_KEY, SUPABASE_URL, is_supabase_configured
+from app.config import (
+    SUPABASE_KEY,
+    SUPABASE_SERVICE_ROLE_KEY,
+    SUPABASE_URL,
+    is_supabase_configured,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +33,10 @@ def _postgrest_request(
         return 0, None
 
     url = f"{SUPABASE_URL}/rest/v1/{endpoint.lstrip('/')}"
+    active_key = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_KEY
     headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "apikey": active_key,
+        "Authorization": f"Bearer {active_key}",
         "Content-Type": "application/json",
         "Prefer": "return=representation",
     }
@@ -91,9 +97,9 @@ def sync_case_to_supabase(
         "image_path": case_data.get("image_path", ""),
         "annotated_path": case_data.get("annotated_path", ""),
         "media_type": case_data.get("media_type", "image"),
-        "video_duration": float(case_data.get("video_duration", 0.0)),
-        "clarity_score": float(case_data.get("clarity_score", 0.0)),
-        "enhanced_path": case_data.get("enhanced_path", ""),
+        "video_duration": float(case_data.get("video_duration") or 0.0),
+        "clarity_score": float(case_data.get("clarity_score") or 0.0),
+        "enhanced_path": case_data.get("enhanced_path") or "",
     }
 
     # 1. Upsert Case Record
@@ -111,21 +117,28 @@ def sync_case_to_supabase(
     if evidence_items:
         items_payload = []
         for item in evidence_items:
-            bbox = item.get("box", [0, 0, 0, 0])
+            bbox = item.get("box")
+            if not bbox or len(bbox) < 4:
+                bbox = [
+                    item.get("bbox_x1", 0.0),
+                    item.get("bbox_y1", 0.0),
+                    item.get("bbox_x2", 0.0),
+                    item.get("bbox_y2", 0.0),
+                ]
             items_payload.append(
                 {
                     "case_id": case_data["case_id"],
                     "class_name": item.get("class", item.get("class_name", "Evidence")),
                     "category": item.get("category", "General Evidence"),
                     "severity": item.get("severity", "LOW"),
-                    "confidence": float(item.get("confidence", 0.0)),
-                    "activity": item.get("activity", ""),
+                    "confidence": float(item.get("confidence") or 0.0),
+                    "activity": item.get("activity") or "",
                     "bbox_x1": float(bbox[0]) if len(bbox) > 0 else 0.0,
                     "bbox_y1": float(bbox[1]) if len(bbox) > 1 else 0.0,
                     "bbox_x2": float(bbox[2]) if len(bbox) > 2 else 0.0,
                     "bbox_y2": float(bbox[3]) if len(bbox) > 3 else 0.0,
-                    "crop_path": item.get("crop_path", ""),
-                    "video_timestamp": float(item.get("video_timestamp", 0.0)),
+                    "crop_path": item.get("crop_path") or item.get("crop_rel_path") or "",
+                    "video_timestamp": float(item.get("video_timestamp") or 0.0),
                 }
             )
 
