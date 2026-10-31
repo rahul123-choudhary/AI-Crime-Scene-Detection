@@ -46,6 +46,16 @@ def is_firebase_configured() -> bool:
     return FIREBASE_CREDENTIALS_PATH.is_file()
 
 
+# Supabase Cloud Configuration
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", os.getenv("SUPABASE_ANON_KEY", "")).strip()
+
+
+def is_supabase_configured() -> bool:
+    """Check if valid Supabase URL and API Key are configured."""
+    return bool(SUPABASE_URL and SUPABASE_KEY and SUPABASE_URL.startswith("http"))
+
+
 # Model Checkpoints
 WEAPON_MODEL_PATH = MODELS_DIR / "pretrained_weapon_detector.pt"
 FORENSIC_MODEL_PATH = MODELS_DIR / "best.pt"

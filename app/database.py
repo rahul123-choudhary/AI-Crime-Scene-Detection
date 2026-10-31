@@ -352,6 +352,13 @@ def insert_case(
     except Exception as fb_err:
         logger.debug("Firebase auto-sync notice: %s", fb_err)
 
+    # 4. Cloud Supabase PostgreSQL Synchronization
+    try:
+        from app.services.supabase_service import sync_case_to_supabase
+        sync_case_to_supabase(case_data, evidence_items)
+    except Exception as sb_err:
+        logger.debug("Supabase auto-sync notice: %s", sb_err)
+
     return case_data["case_id"]
 
 
