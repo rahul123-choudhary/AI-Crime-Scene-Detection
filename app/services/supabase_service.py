@@ -139,3 +139,88 @@ def sync_case_to_supabase(
 
     logger.info("Successfully synced Case %s to Supabase.", case_data["case_id"])
     return True
+
+
+def supabase_auth_signup(
+    email: str,
+    password: str,
+    metadata: dict[str, Any] | None = None,
+) -> tuple[bool, dict[str, Any] | str]:
+    """Register a new user directly in Supabase GoTrue Auth."""
+    if not is_supabase_configured():
+        return False, "Supabase credentials are not configured in .env."
+
+    url = f"{SUPABASE_URL}/auth/v1/signup"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "email": email,
+        "password": password,
+    }
+    if metadata:
+        payload["data"] = metadata
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=6) as response:
+            body = response.read().decode("utf-8")
+            data = json.loads(body) if body else {}
+            return True, data
+    except urllib.error.HTTPError as http_err:
+        err_msg = http_err.read().decode("utf-8", errors="ignore")
+        try:
+            parsed_err = json.loads(err_msg)
+            return False, parsed_err.get("msg") or parsed_err.get("error_description") or err_msg
+        except Exception:
+            return False, err_msg
+    except Exception as exc:
+        return False, str(exc)
+
+
+def supabase_auth_signin(
+    email: str,
+    password: str,
+) -> tuple[bool, dict[str, Any] | str]:
+    """Authenticate a user using Supabase GoTrue Auth password grant."""
+    if not is_supabase_configured():
+        return False, "Supabase credentials are not configured in .env."
+
+    url = f"{SUPABASE_URL}/auth/v1/token?grant_type=password"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "email": email,
+        "password": password,
+    }
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=6) as response:
+            body = response.read().decode("utf-8")
+            data = json.loads(body) if body else {}
+            return True, data
+    except urllib.error.HTTPError as http_err:
+        err_msg = http_err.read().decode("utf-8", errors="ignore")
+        try:
+            parsed_err = json.loads(err_msg)
+            return False, parsed_err.get("msg") or parsed_err.get("error_description") or err_msg
+        except Exception:
+            return False, err_msg
+    except Exception as exc:
+        return False, str(exc)
+
+

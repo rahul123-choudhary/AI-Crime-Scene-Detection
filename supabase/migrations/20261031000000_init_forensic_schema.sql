@@ -121,3 +121,4 @@ CREATE POLICY "Allow public update access to users" ON public.users FOR UPDATE U
 
 -- Analytics Events Policies
 CREATE POLICY "Allow public access to analytics_events" ON public.analytics_events FOR ALL USING (true);
+

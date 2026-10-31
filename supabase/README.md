@@ -36,3 +36,4 @@ supabase/
    - `public.audit_logs`: Complete forensic custody chain and action history.
    - `public.users`: Investigator profiles, badge credentials, and authentication records.
    - `public.analytics_events`: Telemetry and scene analysis performance events.
+

@@ -262,6 +262,29 @@ def login() -> Any:
             flash(f"Google identity verified. Welcome back, {name}.", "success")
             return redirect(url_for("web.dashboard"))
 
+        # Verify against Supabase Auth (if configured)
+        from app.config import is_supabase_configured
+        if is_supabase_configured():
+            try:
+                from app.services.supabase_service import supabase_auth_signin
+                sb_ok, sb_res = supabase_auth_signin(email_or_user, password)
+                if sb_ok and isinstance(sb_res, dict):
+                    sb_user = sb_res.get("user", {})
+                    user_meta = sb_user.get("user_metadata", {})
+                    session["user"] = {
+                        "name": user_meta.get("fullname") or sb_user.get("email", "").split("@")[0].title() or "Forensic Officer",
+                        "email": sb_user.get("email", email_or_user),
+                        "role": user_meta.get("role", "Forensic Investigator"),
+                        "badge": user_meta.get("badge", "CS-9912"),
+                        "unit": user_meta.get("unit", "Crime Scene Investigation Unit"),
+                        "auth_provider": "Supabase Auth",
+                    }
+                    session["user_id"] = sb_user.get("id") or sb_user.get("email")
+                    flash(f"Supabase Identity Verified. Welcome back, {session['user']['name']}.", "success")
+                    return redirect(url_for("web.dashboard"))
+            except Exception as sb_err:
+                current_app.logger.warning("Supabase auth login check notice: %s", sb_err)
+
         # Verify against database password hash
         verified = verify_user_credentials(email_or_user, password)
         if verified:
@@ -322,6 +345,21 @@ def signup() -> Any:
             register_or_update_firebase_officer(fullname, email, role="Forensic Investigator")
         except Exception as fb_err:
             current_app.logger.warning("Firebase officer signup notice: %s", fb_err)
+
+        # 3. Provision in Supabase Cloud Authentication (if configured)
+        from app.config import is_supabase_configured
+        if is_supabase_configured():
+            try:
+                from app.services.supabase_service import supabase_auth_signup
+                sb_ok, sb_res = supabase_auth_signup(
+                    email=email,
+                    password=password,
+                    metadata={"fullname": fullname, "badge": badge, "unit": unit, "role": "Forensic Investigator"},
+                )
+                if sb_ok:
+                    current_app.logger.info("Officer %s successfully provisioned in Supabase Auth.", email)
+            except Exception as sb_err:
+                current_app.logger.warning("Supabase officer signup notice: %s", sb_err)
 
         # 3. Establish user session and mark for onboarding tour
         session["user"] = user_record

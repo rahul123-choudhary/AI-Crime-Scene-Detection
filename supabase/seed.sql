@@ -24,3 +24,4 @@ VALUES (
     1
 )
 ON CONFLICT (email) DO NOTHING;
+
