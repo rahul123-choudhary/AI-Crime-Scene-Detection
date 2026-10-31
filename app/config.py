@@ -68,7 +68,12 @@ def is_supabase_configured() -> bool:
 # Model Checkpoints
 WEAPON_MODEL_PATH = MODELS_DIR / "pretrained_weapon_detector.pt"
 FORENSIC_MODEL_PATH = MODELS_DIR / "best.pt"
-GENERAL_MODEL_PATH = BASE_DIR / "yolo11n.pt"
+if (BASE_DIR / "yolov8m.pt").is_file():
+    GENERAL_MODEL_PATH = BASE_DIR / "yolov8m.pt"
+elif (BASE_DIR / "yolo11n.pt").is_file():
+    GENERAL_MODEL_PATH = BASE_DIR / "yolo11n.pt"
+else:
+    GENERAL_MODEL_PATH = BASE_DIR / "yolov8n.pt"
 
 # Create directories if they do not exist
 for folder in [UPLOAD_DIR, RESULT_DIR, CROPS_DIR, SAMPLES_DIR, DATABASE_DIR, REPORTS_DIR, MODELS_DIR]:

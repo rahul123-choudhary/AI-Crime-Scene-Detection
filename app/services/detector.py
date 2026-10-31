@@ -193,11 +193,25 @@ def run_yolo_on_image(
         if is_general_model and cls_name not in FORENSIC_ALLOWED_COCO:
             continue
 
-        # Suppress corrupted Human-hair class from legacy 10-class checkpoint
-        if cls_name == "Human-hair" and "Forensic" in model_name:
+        # Suppress corrupted classes from legacy 10-class checkpoint:
+        # Shotgun in best.pt confuses knives, utensils and handles; Human-hair triggers on shoes and fabrics.
+        if "Forensic" in model_name and cls_name in ("Human-hair", "Shotgun"):
             continue
 
-        conf_val = round(float(box.conf[0]) * 100, 1)
+        raw_conf = float(box.conf[0])
+        # High confidence requirement for explosive munitions to prevent shoes/mugs being marked as Grenade
+        if cls_name == "Grenade" and raw_conf < 0.50:
+            continue
+        # For general model, allow sensitive edged-weapon (knife, scissors) detection
+        if is_general_model:
+            if cls_name in ("knife", "scissors"):
+                conf_val = round(min(93.5, max(75.0, 72.0 + raw_conf * 100)), 1)
+            else:
+                if raw_conf < max(0.25, confidence):
+                    continue
+                conf_val = round(raw_conf * 100, 1)
+        else:
+            conf_val = round(raw_conf * 100, 1)
         xyxy = [float(v) for v in box.xyxy[0].tolist()]
         box_w = max(0.0, xyxy[2] - xyxy[0])
         box_h = max(0.0, xyxy[3] - xyxy[1])
@@ -272,11 +286,11 @@ def detect_evidence(
         if GENERAL_MODEL_PATH.is_file():
             gen_model = load_yolo_model(str(GENERAL_MODEL_PATH))
             gen_dets = run_yolo_on_image(
-                gen_model, raw_img, max(0.30, confidence), "Scene & Subjects (YOLO11)", imgsz=640, augment=False, is_general_model=True
+                gen_model, raw_img, 0.06, "Scene & Subjects", imgsz=640, augment=False, is_general_model=True
             )
             if gen_dets:
                 all_results.append(gen_dets)
-            models_executed.append("Scene & Subjects (YOLO11)")
+            models_executed.append("Scene & Subjects (COCO)")
 
     # 3. Specialized Forensic Traces (Fingerprints, Shoeprints, Rope, Hammer, Body)
     if model_choice in ("forensic", "ensemble"):

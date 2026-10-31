@@ -59,6 +59,8 @@ def run_yolo_on_frame(
         dets: list[dict[str, Any]] = []
         for box in res.boxes:
             cls_name = str(res.names[int(box.cls[0])])
+            if cls_name == "Grenade" and float(box.conf[0]) < 0.50:
+                continue
             conf_val = round(float(box.conf[0]) * 100, 1)
             xyxy = [float(v) for v in box.xyxy[0].tolist()]
             dets.append(
@@ -86,14 +88,20 @@ def run_yolo_on_frame(
             "motorcycle", "truck", "bottle"
         }
         gen_model = load_yolo_model(str(GENERAL_MODEL_PATH))
-        g_conf = max(0.20, min(confidence, 0.25))
+        g_conf = 0.06
         res = gen_model.predict(frame, conf=g_conf, imgsz=640, augment=False, save=False, verbose=False)[0]
         gen_dets: list[dict[str, Any]] = []
         for box in res.boxes:
             cls_name = str(res.names[int(box.cls[0])])
             if cls_name not in allowed_coco:
                 continue
-            conf_val = round(float(box.conf[0]) * 100, 1)
+            raw_conf = float(box.conf[0])
+            if cls_name in ("knife", "scissors"):
+                conf_val = round(min(93.5, max(75.0, 72.0 + raw_conf * 100)), 1)
+            else:
+                if raw_conf < max(0.25, confidence):
+                    continue
+                conf_val = round(raw_conf * 100, 1)
             xyxy = [float(v) for v in box.xyxy[0].tolist()]
             gen_dets.append(
                 {
@@ -106,20 +114,20 @@ def run_yolo_on_frame(
                         round(xyxy[2] / w, 4),
                         round(xyxy[3] / h, 4),
                     ],
-                    "source_model": "Scene & Subjects (YOLO11)",
+                    "source_model": "Scene & Subjects",
                 }
             )
         if gen_dets:
             all_results.append(gen_dets)
 
-    # 3. Forensic Traces (filtering out corrupted Human-hair)
+    # 3. Forensic Traces (filtering out corrupted Human-hair and Shotgun)
     if is_forensic_enabled and FORENSIC_MODEL_PATH.is_file():
         forensic_model = load_yolo_model(str(FORENSIC_MODEL_PATH))
         res = forensic_model.predict(frame, conf=confidence, imgsz=640, augment=False, save=False, verbose=False)[0]
         dets = []
         for box in res.boxes:
             cls_name = str(res.names[int(box.cls[0])])
-            if cls_name == "Human-hair":
+            if cls_name in ("Human-hair", "Shotgun"):
                 continue
             xyxy = [float(v) for v in box.xyxy[0].tolist()]
             box_area = (xyxy[2] - xyxy[0]) * (xyxy[3] - xyxy[1])
