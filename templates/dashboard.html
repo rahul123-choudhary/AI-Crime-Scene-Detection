@@ -2102,8 +2102,22 @@
                         </div>
 
                         <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted);">
-                            Inference: <span id="cameraLatencyVal" style="color: #10b981;">32ms</span> • Model: <span style="color: #ffd000;">YOLOv8</span>
+                            Inference: <span id="cameraLatencyVal" style="color: #10b981;">32ms</span> • Model: <span style="color: #ffd000;">YOLOv8 + Ensemble</span>
                         </div>
+                    </div>
+
+                    <!-- Live Real-Time AI Action & Scene Intelligence Feed -->
+                    <div id="liveCameraActionFeed" style="margin-top: 14px; padding: 12px 16px; background: rgba(14, 21, 37, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.95rem;">
+                                <i class="fa-solid fa-brain"></i>
+                            </span>
+                            <div>
+                                <div style="font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); text-transform: uppercase;">Real-Time Action & Scene Dynamics</div>
+                                <div id="liveActionSummary" style="font-size: 0.88rem; font-weight: 600; color: #ffffff;">Monitoring live sector... No active threats detected.</div>
+                            </div>
+                        </div>
+                        <div id="liveActionPills" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
                     </div>
                 </div>
             </div>
@@ -2903,21 +2917,24 @@
             const canvas = document.getElementById('cameraCanvas');
             const statusText = document.getElementById('cameraStatusText');
 
+            const initDetectionOnReady = () => {
+                canvas.width = video.videoWidth || 1280;
+                canvas.height = video.videoHeight || 720;
+                if (!isDetecting) {
+                    startDetectionLoop();
+                }
+            };
+
             try {
                 webcamStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
                 });
                 video.srcObject = webcamStream;
                 statusText.innerText = "WEBCAM ACTIVE • 720P/1080P";
                 statusText.style.color = "#10b981";
 
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth || 1280;
-                    canvas.height = video.videoHeight || 720;
-                    if (!isDetecting) {
-                        startDetectionLoop();
-                    }
-                };
+                video.onloadedmetadata = initDetectionOnReady;
+                if (video.videoWidth) initDetectionOnReady();
             } catch (err) {
                 console.warn("Webcam access error, switching to synthetic CCTV feed:", err);
                 statusText.innerText = "SIMULATED CCTV CAM-04 (ACTIVE)";
@@ -2926,13 +2943,8 @@
                 video.loop = true;
                 video.muted = true;
                 video.play();
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth || 1280;
-                    canvas.height = video.videoHeight || 720;
-                    if (!isDetecting) {
-                        startDetectionLoop();
-                    }
-                };
+                video.onloadedmetadata = initDetectionOnReady;
+                if (video.videoWidth) initDetectionOnReady();
             }
         }
 
@@ -2946,12 +2958,18 @@
                 webcamStream.getTracks().forEach(track => track.stop());
                 webcamStream = null;
             }
+            const canvas = document.getElementById('cameraCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
         }
 
         function toggleWebcam() {
             if (webcamStream || isDetecting) {
                 stopWebcam();
                 document.getElementById('cameraStatusText').innerText = "CAMERA OFF";
+                document.getElementById('cameraThreatBadge').innerText = "STATUS: STANDBY";
             } else {
                 startWebcam();
             }
@@ -2965,15 +2983,27 @@
 
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
+            let isSending = false;
 
             detectionInterval = setInterval(async () => {
-                if (!video.videoWidth || !video.videoHeight) return;
+                if (!video.videoWidth || !video.videoHeight || isSending) return;
 
-                tempCanvas.width = 640;
-                tempCanvas.height = 360;
-                tempCtx.drawImage(video, 0, 0, 640, 360);
+                const vw = video.videoWidth;
+                const vh = video.videoHeight;
+                if (canvas.width !== vw || canvas.height !== vh) {
+                    canvas.width = vw;
+                    canvas.height = vh;
+                }
+
+                // Preserve exact aspect ratio to prevent distorted detection
+                const targetW = 640;
+                const targetH = Math.max(240, Math.round(targetW * (vh / vw)));
+                tempCanvas.width = targetW;
+                tempCanvas.height = targetH;
+                tempCtx.drawImage(video, 0, 0, targetW, targetH);
                 const b64Frame = tempCanvas.toDataURL('image/jpeg', 0.65);
 
+                isSending = true;
                 const t0 = performance.now();
                 try {
                     const res = await fetch('/api/v1/detect_frame', {
@@ -2981,20 +3011,25 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             frame_base64: b64Frame,
-                            confidence: 0.25,
+                            confidence: 0.22,
                             model: 'ensemble'
                         })
                     });
                     const data = await res.json();
                     const latency = Math.round(performance.now() - t0);
-                    document.getElementById('cameraLatencyVal').innerText = latency + 'ms';
+                    const latEl = document.getElementById('cameraLatencyVal');
+                    if (latEl) latEl.innerText = latency + 'ms';
 
-                    // Draw detections
+                    // Clear reticle canvas for fresh frame annotations
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    const scaleX = canvas.width / 640;
-                    const scaleY = canvas.height / 360;
+                    const scaleX = canvas.width / targetW;
+                    const scaleY = canvas.height / targetH;
 
                     let hasCritical = false;
+                    let hasPerson = false;
+                    let latestPersonAction = '';
+                    let topWeaponName = '';
+                    const actionPills = [];
 
                     if (data.detections && data.detections.length > 0) {
                         data.detections.forEach(det => {
@@ -3004,38 +3039,125 @@
                             const rw = (x2 - x1) * scaleX;
                             const rh = (y2 - y1) * scaleY;
 
-                            const isWeapon = (det.severity === 'CRITICAL' || det.category === 'Weapons & Ballistics' || /gun|knife|firearm|pistol|weapon/i.test(det.class));
-                            if (isWeapon) hasCritical = true;
+                            const isWeapon = (det.severity === 'CRITICAL' || det.category === 'Weapons & Ballistics' || /gun|knife|firearm|pistol|handgun|rifle|weapon|blade|grenade|scissors|bat/i.test(det.class));
+                            const isPerson = /person|suspect|subject/i.test(det.class);
+                            const isArmedAction = det.activity && /armed|weapon|lethal|assault|blade|firearm/i.test(det.activity);
 
-                            ctx.lineWidth = 3;
-                            ctx.strokeStyle = isWeapon ? '#ff2b42' : '#fbbf24';
+                            if (isWeapon || isArmedAction) {
+                                hasCritical = true;
+                                if (isWeapon && !topWeaponName) topWeaponName = det.class;
+                            }
+                            if (isPerson) {
+                                hasPerson = true;
+                                if (det.activity) latestPersonAction = det.activity;
+                            }
+
+                            const color = (isWeapon || isArmedAction) ? '#ff2b42' : (isPerson ? '#38bdf8' : '#fbbf24');
+
+                            // 1. Draw Bounding Box Reticle
+                            ctx.lineWidth = 2.5;
+                            ctx.strokeStyle = color;
                             ctx.strokeRect(rx, ry, rw, rh);
 
-                            // Label badge
-                            const label = (det.class || 'Evidence') + ' ' + Math.round(det.confidence * 100) + '%';
-                            ctx.fillStyle = isWeapon ? '#ff2b42' : '#fbbf24';
-                            ctx.font = 'bold 14px "JetBrains Mono", monospace';
-                            const textW = ctx.measureText(label).width;
-                            ctx.fillRect(rx, ry - 24, textW + 12, 24);
+                            // 2. Tactical Corner Accents
+                            const cLen = Math.min(22, Math.max(8, rw * 0.18, rh * 0.18));
+                            ctx.lineWidth = 4;
+                            // Top-left
+                            ctx.beginPath(); ctx.moveTo(rx, ry + cLen); ctx.lineTo(rx, ry); ctx.lineTo(rx + cLen, ry); ctx.stroke();
+                            // Top-right
+                            ctx.beginPath(); ctx.moveTo(rx + rw - cLen, ry); ctx.lineTo(rx + rw, ry); ctx.lineTo(rx + rw, ry + cLen); ctx.stroke();
+                            // Bottom-left
+                            ctx.beginPath(); ctx.moveTo(rx, ry + rh - cLen); ctx.lineTo(rx, ry + rh); ctx.lineTo(rx + cLen, ry + rh); ctx.stroke();
+                            // Bottom-right
+                            ctx.beginPath(); ctx.moveTo(rx + rw - cLen, ry + rh); ctx.lineTo(rx + rw, ry + rh); ctx.lineTo(rx + rw, ry + rh - cLen); ctx.stroke();
 
-                            ctx.fillStyle = isWeapon ? '#ffffff' : '#0a0d13';
-                            ctx.fillText(label, rx + 6, ry - 7);
+                            // 3. Label Text & Action State
+                            const confPct = det.confidence > 1 ? Math.round(det.confidence) : Math.round(det.confidence * 100);
+                            const prefix = isWeapon ? '⚠️ [WEAPON] ' : (isPerson ? '👤 ' : '📦 ');
+                            const titleText = prefix + (det.class || 'Object').toUpperCase() + ' ' + confPct + '%';
+                            const actionText = det.activity ? det.activity : '';
+
+                            // Measure text
+                            ctx.font = 'bold 12px "JetBrains Mono", monospace';
+                            const titleW = ctx.measureText(titleText).width;
+                            ctx.font = '10.5px "JetBrains Mono", monospace';
+                            const actionW = actionText ? ctx.measureText(actionText).width : 0;
+                            const badgeW = Math.max(titleW, actionW) + 16;
+                            const badgeH = actionText ? 36 : 22;
+                            const badgeY = Math.max(0, ry - badgeH - 6);
+
+                            // Draw HUD Pill Background
+                            ctx.fillStyle = 'rgba(7, 13, 23, 0.92)';
+                            ctx.fillRect(rx, badgeY, badgeW, badgeH);
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 1.5;
+                            ctx.strokeRect(rx, badgeY, badgeW, badgeH);
+
+                            // Draw Title
+                            ctx.fillStyle = color;
+                            ctx.font = 'bold 12px "JetBrains Mono", monospace';
+                            ctx.fillText(titleText, rx + 8, badgeY + 15);
+
+                            // Draw Action Line
+                            if (actionText) {
+                                ctx.fillStyle = '#f1f5f9';
+                                ctx.font = '10.5px "JetBrains Mono", monospace';
+                                ctx.fillText(actionText, rx + 8, badgeY + 30);
+                            }
+
+                            if (actionText) {
+                                actionPills.push({ text: (det.class || 'Evidence') + ': ' + actionText, color: color });
+                            }
                         });
                     }
 
+                    // Update Live Camera Threat Status Badge
                     const badge = document.getElementById('cameraThreatBadge');
-                    if (hasCritical) {
-                        badge.innerText = "THREAT DETECTED: ARMED / LETHAL OBJECT";
-                        badge.style.color = "#ff2b42";
-                        badge.parentElement.style.borderColor = "rgba(255, 43, 66, 0.8)";
-                        if (audioAlertEnabled) playSirenTone();
-                    } else {
-                        badge.innerText = "STATUS: MONITORING ACTIVE";
-                        badge.style.color = "#34d399";
-                        badge.parentElement.style.borderColor = "rgba(52, 211, 153, 0.4)";
+                    if (badge) {
+                        if (hasCritical) {
+                            const weaponLabel = topWeaponName ? ` (${topWeaponName.toUpperCase()})` : '';
+                            badge.innerText = `🚨 CRITICAL THREAT: ARMED WEAPON${weaponLabel}`;
+                            badge.style.color = "#ff2b42";
+                            badge.parentElement.style.borderColor = "rgba(255, 43, 66, 0.9)";
+                            badge.parentElement.style.background = "rgba(255, 43, 66, 0.18)";
+                            if (audioAlertEnabled) playSirenTone();
+                        } else if (hasPerson) {
+                            badge.innerText = `👤 SUBJECT: ${latestPersonAction || 'ACTIVE MONITORED'}`;
+                            badge.style.color = "#38bdf8";
+                            badge.parentElement.style.borderColor = "rgba(56, 189, 248, 0.6)";
+                            badge.parentElement.style.background = "rgba(56, 189, 248, 0.12)";
+                        } else {
+                            badge.innerText = "STATUS: MONITORING ACTIVE";
+                            badge.style.color = "#34d399";
+                            badge.parentElement.style.borderColor = "rgba(52, 211, 153, 0.4)";
+                            badge.parentElement.style.background = "rgba(52, 211, 153, 0.08)";
+                        }
+                    }
+
+                    // Update Live Action Summary & Action Pills
+                    const summaryEl = document.getElementById('liveActionSummary');
+                    if (summaryEl) {
+                        if (data.scene_narrative) {
+                            summaryEl.innerText = data.scene_narrative;
+                        } else if (hasCritical) {
+                            summaryEl.innerText = "Urgent: Lethal weapon asset isolated within camera field!";
+                        } else if (hasPerson) {
+                            summaryEl.innerText = `Subject observed in active stance: ${latestPersonAction}`;
+                        } else {
+                            summaryEl.innerText = "Monitoring live sector... No active threats detected.";
+                        }
+                    }
+
+                    const pillsEl = document.getElementById('liveActionPills');
+                    if (pillsEl) {
+                        pillsEl.innerHTML = actionPills.slice(0, 3).map(p =>
+                            `<span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: ${p.color}; background: rgba(255,255,255,0.05); border: 1px solid ${p.color}; padding: 3px 8px; border-radius: 4px;">${p.text}</span>`
+                        ).join('');
                     }
                 } catch (e) {
                     console.error("Frame detection error:", e);
+                } finally {
+                    isSending = false;
                 }
             }, 500);
         }

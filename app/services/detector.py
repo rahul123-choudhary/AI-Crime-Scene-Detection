@@ -125,7 +125,11 @@ def draw_forensic_annotations(
         cv2.line(canvas, (x2, y2), (x2 - corner_len, y2), color, t)
 
         # Forensic Tag Badge
-        label = f"{item['class'].upper()} {item['confidence']:.1f}%"
+        act = item.get("activity")
+        if act:
+            label = f"{item['class'].upper()} {item['confidence']:.1f}% | {act}"
+        else:
+            label = f"{item['class'].upper()} {item['confidence']:.1f}%"
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.55
         font_thick = 1

@@ -39,14 +39,14 @@ def infer_evidence_activity(
     has_weapon_nearby = False
     for other in all_detections:
         o_cls = other.get("class", other.get("class_name", "")).lower()
-        if any(w in o_cls for w in ("knife", "gun", "pistol", "revolver", "firearm", "rifle", "weapon")):
+        if any(w in o_cls for w in ("knife", "gun", "pistol", "revolver", "firearm", "rifle", "handgun", "grenade", "blade", "scissors", "bat")):
             obox = other.get("box", [0, 0, 0, 0])
             if len(obox) >= 4:
                 ox1, oy1, ox2, oy2 = [float(v) for v in obox[:4]]
                 dx = max(0.0, max(x1, ox1) - min(x2, ox2))
                 dy = max(0.0, max(y1, oy1) - min(y2, oy2))
                 dist = (dx**2 + dy**2) ** 0.5
-                if dist < 120.0:
+                if dist < 140.0:
                     has_weapon_nearby = True
                     break
 
@@ -71,15 +71,19 @@ def infer_evidence_activity(
             else:
                 return f"Support Formation / Perimeter Sector #{person_idx + 1}"
         else:
-            if bottom_y > 0.7:
+            if norm_h > 0.6:
+                return "Active Presence / Direct Field Observation"
+            elif bottom_y > 0.7:
                 return "Active Traversal / Advancing into Scene"
             return "Perimeter Ingress / Advancing into Scene"
 
     # Weapon classifications
-    if any(w in cls_name for w in ("gun", "pistol", "revolver", "firearm", "rifle")):
+    if any(w in cls_name for w in ("gun", "pistol", "revolver", "firearm", "rifle", "handgun", "grenade")):
         return "Exposed Firearm / Active Ballistic Threat"
-    if any(w in cls_name for w in ("knife", "blade", "dagger", "sword")):
+    if any(w in cls_name for w in ("knife", "blade", "dagger", "sword", "scissors")):
         return "Drawn Edged Weapon / Lethal Contact Threat"
+    if any(w in cls_name for w in ("bat", "baseball bat", "hammer", "club")):
+        return "Blunt Impact Weapon / Assault Implement"
 
     # Traces & Biometric Evidence
     if "footprint" in cls_name or "shoe" in cls_name:

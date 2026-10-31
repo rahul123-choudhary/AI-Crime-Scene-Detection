@@ -239,6 +239,8 @@ def api_detect_frame() -> Any:
 
     detections = run_yolo_on_frame(raw_img, model_choice=model_choice, confidence=conf_val)
     threat_level, threat_score, category_counts = assess_crime_scene_threat(detections)
+    from app.services.analyzer import generate_scene_narrative
+    scene_narrative = generate_scene_narrative(detections, threat_level, threat_score)
     latency_ms = round((time.perf_counter() - start) * 1000, 1)
 
     return jsonify(
@@ -246,6 +248,7 @@ def api_detect_frame() -> Any:
             "detections": detections,
             "threat_level": threat_level,
             "threat_score": threat_score,
+            "scene_narrative": scene_narrative,
             "category_counts": category_counts,
             "latency_ms": latency_ms,
             "count": len(detections),

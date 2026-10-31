@@ -46,10 +46,16 @@ def run_yolo_on_frame(
 
     model_choice = model_choice.lower().strip()
 
-    # 1. Specialized Weapons Detector
-    if model_choice in ("weapon", "ensemble") and WEAPON_MODEL_PATH.is_file():
+    is_weapon_enabled = model_choice in ("weapon", "ensemble", "yolo", "yolov8", "yolo11", "all", "default", "")
+    is_general_enabled = model_choice in ("weapon", "ensemble", "general", "yolo", "yolov8", "yolo11", "all", "default", "")
+    is_forensic_enabled = model_choice in ("forensic", "ensemble", "all")
+
+    # 1. Specialized Weapons Detector (Firearms, Handguns, Knives, Munitions)
+    if is_weapon_enabled and WEAPON_MODEL_PATH.is_file():
         weapon_model = load_yolo_model(str(WEAPON_MODEL_PATH))
-        res = weapon_model.predict(frame, conf=confidence, imgsz=640, augment=False, save=False, verbose=False)[0]
+        # High-sensitivity threshold for real-time video/webcam
+        w_conf = max(0.18, min(confidence, 0.25))
+        res = weapon_model.predict(frame, conf=w_conf, imgsz=640, augment=False, save=False, verbose=False)[0]
         dets: list[dict[str, Any]] = []
         for box in res.boxes:
             cls_name = str(res.names[int(box.cls[0])])
@@ -73,14 +79,15 @@ def run_yolo_on_frame(
             all_results.append(dets)
 
     # 2. General Scene, Suspects & Persons (YOLO11)
-    if model_choice in ("weapon", "ensemble") and GENERAL_MODEL_PATH.is_file():
+    if is_general_enabled and GENERAL_MODEL_PATH.is_file():
         allowed_coco = {
             "person", "knife", "scissors", "baseball bat", "backpack",
             "handbag", "suitcase", "cell phone", "laptop", "car",
             "motorcycle", "truck", "bottle"
         }
         gen_model = load_yolo_model(str(GENERAL_MODEL_PATH))
-        res = gen_model.predict(frame, conf=max(0.30, confidence), imgsz=640, augment=False, save=False, verbose=False)[0]
+        g_conf = max(0.20, min(confidence, 0.25))
+        res = gen_model.predict(frame, conf=g_conf, imgsz=640, augment=False, save=False, verbose=False)[0]
         gen_dets: list[dict[str, Any]] = []
         for box in res.boxes:
             cls_name = str(res.names[int(box.cls[0])])
@@ -106,7 +113,7 @@ def run_yolo_on_frame(
             all_results.append(gen_dets)
 
     # 3. Forensic Traces (filtering out corrupted Human-hair)
-    if model_choice in ("forensic", "ensemble") and FORENSIC_MODEL_PATH.is_file():
+    if is_forensic_enabled and FORENSIC_MODEL_PATH.is_file():
         forensic_model = load_yolo_model(str(FORENSIC_MODEL_PATH))
         res = forensic_model.predict(frame, conf=confidence, imgsz=640, augment=False, save=False, verbose=False)[0]
         dets = []
@@ -143,7 +150,9 @@ def run_yolo_on_frame(
     else:
         merged = []
 
-    # Enrich each detection with category, severity, and color
+    # Enrich each detection with category, severity, color, AND contextual behavioral activity
+    total_persons = sum(1 for it in merged if "person" in it.get("class", "").lower())
+    p_idx = 0
     enriched: list[dict[str, Any]] = []
     for item in merged:
         meta = get_evidence_metadata(item["class"])
@@ -151,6 +160,14 @@ def run_yolo_on_frame(
         item_copy["category"] = meta["category"]
         item_copy["severity"] = meta["severity"]
         item_copy["color"] = meta["color"]
+
+        cls_lower = item_copy.get("class", "").lower()
+        if "person" in cls_lower:
+            act = infer_evidence_activity(item_copy, merged, h, w, p_idx, total_persons)
+            p_idx += 1
+        else:
+            act = infer_evidence_activity(item_copy, merged, h, w)
+        item_copy["activity"] = act
         enriched.append(item_copy)
 
     return enriched
