@@ -1785,18 +1785,18 @@
             <!-- User Profile Avatar Pill -->
             <div class="user-profile-menu" onclick="toggleUserDropdown(event)">
                 <div class="user-avatar-circle">
-                    {{ current_user.name[0] if current_user and current_user.name else 'R' }}
+                    {{ (current_user.nickname or current_user.name)[0].upper() if current_user and (current_user.nickname or current_user.name) else 'O' }}
                 </div>
                 <div class="user-name-text">
-                    {{ current_user.name if current_user and current_user.name else 'Rahul Choudhary' }}
+                    {{ current_user.nickname or current_user.name if current_user and (current_user.nickname or current_user.name) else 'Forensic Officer' }}
                 </div>
                 <i class="fa-solid fa-chevron-down user-dropdown-icon"></i>
 
                 <!-- User Dropdown Popover -->
                 <div class="user-dropdown-popover" id="userDropdown">
                     <div class="user-popover-info">
-                        <div class="user-popover-title">{{ current_user.name }}</div>
-                        <div class="user-popover-role">{{ current_user.role }} • {{ current_user.badge }}</div>
+                        <div class="user-popover-title">{{ current_user.nickname or current_user.name if current_user else 'Forensic Officer' }}</div>
+                        <div class="user-popover-role">{{ current_user.role if current_user else 'Investigator' }} • {{ current_user.badge if current_user else 'Clearance-L3' }}</div>
                     </div>
                     <a href="javascript:void(0)" onclick="switchTab('settings')" class="user-popover-item">
                         <i class="fa-solid fa-gear"></i> System Settings
@@ -1869,7 +1869,7 @@
                 <!-- Welcome Top Banner -->
                 <div class="welcome-banner-card">
                     <div class="welcome-text-group">
-                        <h2>Welcome, {{ current_user.name if current_user and current_user.name else 'Rahul Choudhary' }}</h2>
+                        <h2>Welcome, {{ current_user.nickname or current_user.name if current_user and (current_user.nickname or current_user.name) else 'Forensic Officer' }}</h2>
                         <p>Detect critical evidence and dangerous objects in real-time.</p>
                     </div>
 
@@ -2364,7 +2364,7 @@
                             <div style="display: flex; flex-direction: column; gap: 12px;">
                                 <div>
                                     <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Investigator Name</label>
-                                    <input type="text" id="prefInvestigator" value="{{ current_user.name }}" style="background: #11151e; border: 1px solid var(--border-dark); color: #ffffff; padding: 10px 14px; border-radius: 8px; width: 100%; font-size: 13px;">
+                                    <input type="text" id="prefInvestigator" value="{{ current_user.nickname or current_user.name }}" style="background: #11151e; border: 1px solid var(--border-dark); color: #ffffff; padding: 10px 14px; border-radius: 8px; width: 100%; font-size: 13px;">
                                 </div>
                                 <div>
                                     <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Department / Unit</label>
@@ -3213,7 +3213,7 @@
                 const formData = new FormData();
                 formData.append('image', blob, 'camera_capture.jpg');
                 formData.append('title', 'Live Camera Snapshot Evidence');
-                formData.append('investigator', '{{ current_user.name }}');
+                formData.append('investigator', '{{ current_user.nickname or current_user.name }}');
                 formData.append('department', '{{ current_user.unit }}');
                 formData.append('model', 'ensemble');
 

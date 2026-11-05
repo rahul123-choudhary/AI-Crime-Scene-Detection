@@ -558,6 +558,7 @@ def verify_user_credentials(email_or_username: str, password: str) -> dict[str, 
                 "id": row["id"],
                 "email": row["email"],
                 "username": row["username"],
+                "nickname": row["username"] or row["fullname"],
                 "name": row["fullname"],
                 "fullname": row["fullname"],
                 "badge": row["badge"],
@@ -579,6 +580,7 @@ def get_user_by_id(user_id: int) -> dict[str, Any] | None:
             return None
         res = dict(row)
         res["name"] = res["fullname"]
+        res["nickname"] = res.get("username") or res.get("fullname")
         return res
 
 

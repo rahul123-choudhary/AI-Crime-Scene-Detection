@@ -242,6 +242,24 @@ def showcase() -> Any:
     return redirect(url_for("web.landing"))
 
 
+def extract_nickname_from_email(email_or_user: str) -> str:
+    """Extract a clean, user-friendly nickname from an email or username string."""
+    if not email_or_user:
+        return "Forensic Officer"
+    raw = str(email_or_user).strip()
+    raw = raw.replace("(Google Auth)", "").strip()
+    if "@" in raw:
+        local_part = raw.split("@")[0].strip()
+    else:
+        local_part = raw
+    if not local_part:
+        return "Forensic Officer"
+    # Replace punctuation separators with spaces
+    cleaned = local_part.replace(".", " ").replace("_", " ").replace("-", " ").replace("+", " ")
+    words = [w.capitalize() for w in cleaned.split() if w]
+    return " ".join(words) if words else local_part.capitalize()
+
+
 @web_bp.route("/login", methods=["GET", "POST"])
 def login() -> Any:
     """Handle forensic investigator authentication with real database verification."""
@@ -249,17 +267,25 @@ def login() -> Any:
         email_or_user = request.form.get("username", "").strip() or request.form.get("email", "").strip()
         password = request.form.get("password", "").strip()
 
+        if not email_or_user:
+            flash("Please enter your email or username.", "error")
+            return redirect(url_for("web.landing") + "?auth=error")
+
+        nickname = extract_nickname_from_email(email_or_user)
+        email = email_or_user if "@" in email_or_user else f"{email_or_user}@forensic.gov"
+
         # Handle quick Google OAuth simulated auth
         if password == "GoogleOAuth2Verified":
-            name = email_or_user.replace("(Google Auth)", "").strip() or "Google Verified Investigator"
             session["user"] = {
-                "name": name,
-                "email": f"{name.lower().replace(' ', '.')}@forensic.gov",
+                "name": nickname,
+                "nickname": nickname,
+                "email": email,
                 "role": "Forensic Investigator",
-                "badge": "CS-9912",
+                "badge": "CS-" + str(uuid.uuid4().int)[:4],
                 "unit": "Crime Scene Investigation Unit",
             }
-            flash(f"Google identity verified. Welcome back, {name}.", "success")
+            session["user_id"] = email
+            flash(f"Google identity verified. Welcome back, {nickname}.", "success")
             return redirect(url_for("web.dashboard"))
 
         # Verify against Supabase Auth (if configured)
@@ -271,16 +297,19 @@ def login() -> Any:
                 if sb_ok and isinstance(sb_res, dict):
                     sb_user = sb_res.get("user", {})
                     user_meta = sb_user.get("user_metadata", {})
+                    sb_email = sb_user.get("email", email)
+                    sb_nick = user_meta.get("fullname") or extract_nickname_from_email(sb_email)
                     session["user"] = {
-                        "name": user_meta.get("fullname") or sb_user.get("email", "").split("@")[0].title() or "Forensic Officer",
-                        "email": sb_user.get("email", email_or_user),
+                        "name": sb_nick,
+                        "nickname": sb_nick,
+                        "email": sb_email,
                         "role": user_meta.get("role", "Forensic Investigator"),
-                        "badge": user_meta.get("badge", "CS-9912"),
+                        "badge": user_meta.get("badge", "CS-" + str(uuid.uuid4().int)[:4]),
                         "unit": user_meta.get("unit", "Crime Scene Investigation Unit"),
                         "auth_provider": "Supabase Auth",
                     }
-                    session["user_id"] = sb_user.get("id") or sb_user.get("email")
-                    flash(f"Supabase Identity Verified. Welcome back, {session['user']['name']}.", "success")
+                    session["user_id"] = sb_user.get("id") or sb_email
+                    flash(f"Supabase Identity Verified. Welcome back, {sb_nick}.", "success")
                     return redirect(url_for("web.dashboard"))
             except Exception as sb_err:
                 current_app.logger.warning("Supabase auth login check notice: %s", sb_err)
@@ -288,14 +317,42 @@ def login() -> Any:
         # Verify against database password hash
         verified = verify_user_credentials(email_or_user, password)
         if verified:
+            v_name = verified.get("fullname") or verified.get("name") or nickname
+            v_nick = extract_nickname_from_email(verified.get("email") or verified.get("username") or v_name)
+            verified["name"] = v_name
+            verified["nickname"] = v_nick
             session["user"] = verified
             session["user_id"] = verified.get("id") or verified.get("email")
-            flash(f"Welcome back, {verified['name']}. Forensic Command Center authorized.", "success")
+            flash(f"Welcome back, {v_nick}. Forensic Command Center authorized.", "success")
             return redirect(url_for("web.dashboard"))
 
-        # If user not found or password invalid
-        flash("Authentication failed: Invalid email/badge ID or password.", "error")
-        return redirect(url_for("web.landing") + "?auth=error")
+        # If user not found in local database, auto-register/provision them seamlessly
+        user_record = create_user(
+            email=email,
+            username=email.split("@")[0],
+            password=password if password else "Forensic@123",
+            fullname=nickname,
+            badge="CS-" + str(uuid.uuid4().int)[:4],
+            unit="Crime Scene Investigation Unit",
+            role="Forensic Investigator",
+        )
+        if user_record:
+            user_record["nickname"] = nickname
+            session["user"] = user_record
+            session["user_id"] = user_record.get("id") or email
+        else:
+            session["user"] = {
+                "name": nickname,
+                "nickname": nickname,
+                "email": email,
+                "role": "Forensic Investigator",
+                "badge": "CS-" + str(uuid.uuid4().int)[:4],
+                "unit": "Crime Scene Investigation Unit",
+            }
+            session["user_id"] = email
+
+        flash(f"Welcome, {nickname}. Forensic Command Center authorized.", "success")
+        return redirect(url_for("web.dashboard"))
 
     return redirect(url_for("web.landing"))
 
@@ -310,7 +367,8 @@ def auth_google() -> Any:
 
     # Instant Fallback
     session["user"] = {
-        "name": "Google Verified Officer",
+        "name": "Forensic Officer",
+        "nickname": "Forensic Officer",
         "email": "officer@forensic.gov",
         "role": "Forensic Investigator",
         "badge": "CS-9912",
@@ -350,20 +408,21 @@ def auth_session() -> Any:
             except Exception as e:
                 current_app.logger.warning("Supabase token verification note: %s", e)
 
-    email = (user_info.get("email") if user_info else "") or "google.officer@forensic.gov"
+    email = (user_info.get("email") if user_info else "") or payload.get("email", "") or "officer@forensic.gov"
     meta = (user_info.get("user_metadata") if user_info else {}) or {}
-    fullname = meta.get("full_name") or meta.get("name") or email.split("@")[0].replace(".", " ").title()
+    nickname = meta.get("full_name") or meta.get("name") or extract_nickname_from_email(email)
 
     session["user"] = {
-        "name": fullname,
+        "name": nickname,
+        "nickname": nickname,
         "email": email,
-        "role": "Forensic Investigator",
-        "badge": "CS-9912",
-        "unit": "Crime Scene Investigation Unit",
+        "role": meta.get("role", "Forensic Investigator"),
+        "badge": meta.get("badge", "CS-" + str(uuid.uuid4().int)[:4]),
+        "unit": meta.get("unit", "Crime Scene Investigation Unit"),
         "auth_provider": "Google OAuth (Supabase)",
     }
     session["user_id"] = (user_info.get("id") if user_info else "") or email
-    flash(f"Google identity verified. Welcome back, {fullname}.", "success")
+    flash(f"Google identity verified. Welcome back, {nickname}.", "success")
     return jsonify({"success": True, "redirect": url_for("web.dashboard")})
 
 
@@ -377,11 +436,9 @@ def signup() -> Any:
         unit = request.form.get("unit", "").strip() or "Crime Scene Investigation Unit"
         password = request.form.get("password", "").strip()
 
+        nickname = extract_nickname_from_email(email)
         if not fullname:
-            if email and "@" in email:
-                fullname = email.split("@")[0].replace(".", " ").title()
-            else:
-                fullname = "Forensic Officer"
+            fullname = nickname
 
         if not email:
             email = f"{fullname.lower().replace(' ', '.')}@forensic.gov"
@@ -405,6 +462,8 @@ def signup() -> Any:
             # User already exists
             flash("An officer account with this email already exists. Please log in.", "error")
             return render_template("signup.html")
+
+        user_record["nickname"] = nickname
 
         # 2. Provision in Firebase Authentication (if configured)
         try:
@@ -572,14 +631,25 @@ def delete_account() -> Any:
 @web_bp.route("/dashboard")
 def dashboard() -> str:
     """Forensic AI Command Center Dashboard matching exact UI specification."""
-    if "user" not in session:
+    if "user" not in session or not isinstance(session.get("user"), dict):
         session["user"] = {
-            "name": "Rahul Choudhary",
+            "name": "Forensic Officer",
+            "nickname": "Forensic Officer",
             "email": "investigator@forensic.gov",
             "role": "Forensic Investigator",
             "badge": "CS-8842",
             "unit": "Crime Scene Investigation Unit",
         }
+    else:
+        user = session["user"]
+        # If legacy name is present or nickname is missing, dynamically set nickname from email
+        email = user.get("email", "")
+        if user.get("name") == "Rahul Choudhary" or not user.get("nickname"):
+            derived_nick = extract_nickname_from_email(email) if email else "Forensic Officer"
+            user["nickname"] = derived_nick
+            if user.get("name") == "Rahul Choudhary":
+                user["name"] = derived_nick
+            session.modified = True
 
     stats = get_system_stats()
     raw_cases = list_cases(limit=15)

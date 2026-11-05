@@ -930,7 +930,7 @@
             <div class="header-auth-buttons">
                 <a href="{{ url_for('web.dashboard') }}" class="btn-header-user">
                     <i class="fa-solid fa-shield-halved"></i>
-                    <span>{{ current_user.name }}</span>
+                    <span>{{ current_user.nickname or current_user.name }}</span>
                 </a>
                 <a href="{{ url_for('web.logout') }}" class="btn-header-logout" title="Sign Out">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>

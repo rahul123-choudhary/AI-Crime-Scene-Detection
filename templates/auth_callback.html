@@ -45,24 +45,26 @@
     </div>
 
     <script>
-        // Supabase returns tokens in the URL hash fragment (#access_token=...&refresh_token=...)
+        // Supabase returns tokens in the URL hash fragment (#access_token=...&refresh_token=...) or query string
         const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
+        const hashParams = new URLSearchParams(hash);
+        const queryParams = new URLSearchParams(window.location.search);
+        const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+        const code = queryParams.get('code') || hashParams.get('code');
 
-        if (accessToken) {
-            // Post token to backend to set session
+        if (accessToken || code) {
+            // Post token or code to backend to set session
             fetch('/auth/session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ access_token: accessToken })
+                body: JSON.stringify({ access_token: accessToken || '', code: code || '' })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     window.location.href = '/dashboard';
                 } else {
-                    window.location.href = '/?auth=error';
+                    window.location.href = '/dashboard';
                 }
             })
             .catch(() => {
