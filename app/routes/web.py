@@ -840,6 +840,21 @@ def download_pdf(case_id: str) -> Any:
     )
 
 
+@web_bp.route("/download-paper")
+def download_research_paper() -> Any:
+    """Directly download the completed research paper docx."""
+    import os
+    paper_path = r"C:\Users\rahul\Downloads\AI_Crime_Scene_Detection_Research_Paper.docx"
+    if os.path.isfile(paper_path):
+        return send_file(
+            paper_path,
+            as_attachment=True,
+            download_name="AI_Crime_Scene_Detection_Research_Paper.docx",
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+    abort(404)
+
+
 @web_bp.post("/cases/<case_id>/delete")
 def remove_case(case_id: str) -> Any:
     """Remove a case record."""
